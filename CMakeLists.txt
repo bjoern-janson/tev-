@@ -294,6 +294,11 @@ target_include_directories(tev_measurement_semantics_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tinylogger
 )
 target_link_libraries(tev_measurement_semantics_test PRIVATE nanogui)
+if (MSVC)
+    # Measurement.h includes fmt, whose Unicode path requires UTF-8 source/execution
+    # character sets on MSVC. Match the main tev target's existing portability rule.
+    target_compile_options(tev_measurement_semantics_test PRIVATE /utf-8)
+endif()
 add_test(NAME tev_measurement_semantics COMMAND tev_measurement_semantics_test)
 add_custom_target(tev_measurement_acceptance ALL
     COMMAND $<TARGET_FILE:tev_measurement_semantics_test>
