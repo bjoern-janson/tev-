@@ -163,7 +163,8 @@ inline std::string measurementOffsetFormula(std::string_view name, nanogui::Vect
 }
 
 inline bool measurementCorrespondencePathsAgree(const MeasurementSamplingSpec& sampling) {
-    return sampling.interactiveReferenceOffset == sampling.materializedReferenceOffset;
+    return sampling.interactiveReferenceOffset.x() == sampling.materializedReferenceOffset.x() &&
+        sampling.interactiveReferenceOffset.y() == sampling.materializedReferenceOffset.y();
 }
 
 inline std::string describeMeasurementLineage(const MeasurementLineage& lineage) {
