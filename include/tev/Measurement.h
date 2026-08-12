@@ -61,6 +61,13 @@ struct MeasurementSamplingSpec {
     nanogui::Vector2i materializedReferenceOffset = {0, 0};
 };
 
+inline MeasurementSamplingSpec measurementSamplingSpec(Box2i candidateDataWindow, Box2i referenceDataWindow) {
+    MeasurementSamplingSpec result;
+    result.interactiveReferenceOffset = candidateDataWindow.min - referenceDataWindow.min;
+    result.materializedReferenceOffset = (referenceDataWindow.size() - candidateDataWindow.size()) / 2;
+    return result;
+}
+
 enum class EMeasurementAlphaPolicy : int {
     AverageCoverage = 0,
 };
@@ -99,6 +106,44 @@ struct MeasurementLineage {
     MeasurementStage stage = MeasurementStage::Inputs;
     ViewSpec view;
 };
+
+struct MeasurementStageProjection {
+    bool usesReference = false;
+    EMetric effectiveMetric = EMetric::Error;
+};
+
+inline MeasurementStageProjection measurementStageProjection(
+    MeasurementStage stage,
+    EMetric terminalMetric,
+    bool hasReference
+) {
+    if (!hasReference || stage == MeasurementStage::Inputs) {
+        return {false, terminalMetric};
+    }
+
+    return {
+        true,
+        stage == MeasurementStage::SignedDifference ? EMetric::Error : terminalMetric,
+    };
+}
+
+inline std::optional<MeasurementStage> measurementUpstreamStage(MeasurementStage stage) {
+    switch (stage) {
+        case MeasurementStage::MetricOutput: return MeasurementStage::SignedDifference;
+        case MeasurementStage::SignedDifference: return MeasurementStage::Inputs;
+        case MeasurementStage::Inputs: return std::nullopt;
+        default: return std::nullopt;
+    }
+}
+
+inline std::optional<MeasurementStage> measurementDownstreamStage(MeasurementStage stage) {
+    switch (stage) {
+        case MeasurementStage::Inputs: return MeasurementStage::SignedDifference;
+        case MeasurementStage::SignedDifference: return MeasurementStage::MetricOutput;
+        case MeasurementStage::MetricOutput: return std::nullopt;
+        default: return std::nullopt;
+    }
+}
 
 inline std::string_view measurementStageName(MeasurementStage stage) {
     switch (stage) {

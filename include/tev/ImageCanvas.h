@@ -115,17 +115,13 @@ public:
             return false;
         }
 
-        if (mMeasurementStage == MeasurementStage::MetricOutput) {
-            setMeasurementStage(MeasurementStage::SignedDifference);
-            return true;
+        const auto upstream = measurementUpstreamStage(mMeasurementStage);
+        if (!upstream) {
+            return false;
         }
 
-        if (mMeasurementStage == MeasurementStage::SignedDifference) {
-            setMeasurementStage(MeasurementStage::Inputs);
-            return true;
-        }
-
-        return false;
+        setMeasurementStage(*upstream);
+        return true;
     }
 
     MeasurementLineage measurementLineage() const {
@@ -137,10 +133,7 @@ public:
         if (mMeasurementReference) {
             lineage.measurement.reference = MeasurementInputRef{std::string{mMeasurementReference->name()}, mMeasurementReference->id()};
             if (mImage) {
-                lineage.measurement.sampling.interactiveReferenceOffset =
-                    mImage->dataWindow().min - mMeasurementReference->dataWindow().min;
-                lineage.measurement.sampling.materializedReferenceOffset =
-                    (mMeasurementReference->size() - mImage->size()) / 2;
+                lineage.measurement.sampling = measurementSamplingSpec(mImage->dataWindow(), mMeasurementReference->dataWindow());
             }
         }
         lineage.measurement.channelGroup = mRequestedChannelGroup;
@@ -218,14 +211,13 @@ private:
     // Moving upstream changes only the exposed stage; it does not destroy the selected
     // terminal metric or reference that define the comparison.
     void syncMeasurementStage() {
-        if (mMeasurementStage == MeasurementStage::Inputs) {
-            mReference = nullptr;
-            mMetric = mMeasurementMetric;
-            return;
-        }
-
-        mReference = mMeasurementReference;
-        mMetric = mMeasurementStage == MeasurementStage::SignedDifference ? EMetric::Error : mMeasurementMetric;
+        const auto projection = measurementStageProjection(
+            mMeasurementStage,
+            mMeasurementMetric,
+            static_cast<bool>(mMeasurementReference)
+        );
+        mReference = projection.usesReference ? mMeasurementReference : nullptr;
+        mMetric = projection.effectiveMetric;
     }
 
     static Task<std::shared_ptr<CanvasStatistics>> computeCanvasStatistics(
