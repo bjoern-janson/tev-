@@ -1,0 +1,355 @@
+name: Apply v0.1 semantic anchor
+
+on:
+  push:
+    branches:
+      - agent/measurement-v01-anchor
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/measurement-v01-anchor
+          fetch-depth: 0
+      - name: Apply semantic anchor
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('include/tev/Measurement.h')
+          s = p.read_text()
+
+          old = '''struct MeasurementSamplingSpec {
+              EMeasurementCorrespondencePolicy interactivePolicy = EMeasurementCorrespondencePolicy::DataWindowCoordinates;
+              nanogui::Vector2i interactiveReferenceOffset = {0, 0};
+
+              EMeasurementCorrespondencePolicy materializedPolicy = EMeasurementCorrespondencePolicy::CenteredImageExtents;
+              nanogui::Vector2i materializedReferenceOffset = {0, 0};
+          };
+'''
+          new = old + '''
+          inline MeasurementSamplingSpec measurementSamplingSpec(Box2i candidateDataWindow, Box2i referenceDataWindow) {
+              MeasurementSamplingSpec result;
+              result.interactiveReferenceOffset = candidateDataWindow.min - referenceDataWindow.min;
+              result.materializedReferenceOffset = (referenceDataWindow.size() - candidateDataWindow.size()) / 2;
+              return result;
+          }
+'''
+          if old not in s:
+              raise SystemExit('MeasurementSamplingSpec anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''struct MeasurementLineage {
+              MeasurementSpec measurement;
+              MeasurementStage stage = MeasurementStage::Inputs;
+              ViewSpec view;
+          };
+'''
+          new = old + '''
+          struct MeasurementStageProjection {
+              bool usesReference = false;
+              EMetric effectiveMetric = EMetric::Error;
+          };
+
+          inline MeasurementStageProjection measurementStageProjection(
+              MeasurementStage stage,
+              EMetric terminalMetric,
+              bool hasReference
+          ) {
+              if (!hasReference || stage == MeasurementStage::Inputs) {
+                  return {false, terminalMetric};
+              }
+
+              return {
+                  true,
+                  stage == MeasurementStage::SignedDifference ? EMetric::Error : terminalMetric,
+              };
+          }
+
+          inline std::optional<MeasurementStage> measurementUpstreamStage(MeasurementStage stage) {
+              switch (stage) {
+                  case MeasurementStage::MetricOutput: return MeasurementStage::SignedDifference;
+                  case MeasurementStage::SignedDifference: return MeasurementStage::Inputs;
+                  case MeasurementStage::Inputs: return std::nullopt;
+                  default: return std::nullopt;
+              }
+          }
+
+          inline std::optional<MeasurementStage> measurementDownstreamStage(MeasurementStage stage) {
+              switch (stage) {
+                  case MeasurementStage::Inputs: return MeasurementStage::SignedDifference;
+                  case MeasurementStage::SignedDifference: return MeasurementStage::MetricOutput;
+                  case MeasurementStage::MetricOutput: return std::nullopt;
+                  default: return std::nullopt;
+              }
+          }
+'''
+          if old not in s:
+              raise SystemExit('MeasurementLineage anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('include/tev/ImageCanvas.h')
+          s = p.read_text()
+          old = '''    bool showUpstream() {
+              if (!mMeasurementReference) {
+                  return false;
+              }
+
+              if (mMeasurementStage == MeasurementStage::MetricOutput) {
+                  setMeasurementStage(MeasurementStage::SignedDifference);
+                  return true;
+              }
+
+              if (mMeasurementStage == MeasurementStage::SignedDifference) {
+                  setMeasurementStage(MeasurementStage::Inputs);
+                  return true;
+              }
+
+              return false;
+          }
+'''
+          new = '''    bool showUpstream() {
+              if (!mMeasurementReference) {
+                  return false;
+              }
+
+              const auto upstream = measurementUpstreamStage(mMeasurementStage);
+              if (!upstream) {
+                  return false;
+              }
+
+              setMeasurementStage(*upstream);
+              return true;
+          }
+'''
+          if old not in s:
+              raise SystemExit('showUpstream anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''            if (mImage) {
+                  lineage.measurement.sampling.interactiveReferenceOffset =
+                      mImage->dataWindow().min - mMeasurementReference->dataWindow().min;
+                  lineage.measurement.sampling.materializedReferenceOffset =
+                      (mMeasurementReference->size() - mImage->size()) / 2;
+              }
+'''
+          new = '''            if (mImage) {
+                  lineage.measurement.sampling = measurementSamplingSpec(mImage->dataWindow(), mMeasurementReference->dataWindow());
+              }
+'''
+          if old not in s:
+              raise SystemExit('sampling anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''    void syncMeasurementStage() {
+              if (mMeasurementStage == MeasurementStage::Inputs) {
+                  mReference = nullptr;
+                  mMetric = mMeasurementMetric;
+                  return;
+              }
+
+              mReference = mMeasurementReference;
+              mMetric = mMeasurementStage == MeasurementStage::SignedDifference ? EMetric::Error : mMeasurementMetric;
+          }
+'''
+          new = '''    void syncMeasurementStage() {
+              const auto projection = measurementStageProjection(
+                  mMeasurementStage,
+                  mMeasurementMetric,
+                  static_cast<bool>(mMeasurementReference)
+              );
+              mReference = projection.usesReference ? mMeasurementReference : nullptr;
+              mMetric = projection.effectiveMetric;
+          }
+'''
+          if old not in s:
+              raise SystemExit('syncMeasurementStage anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          Path('tests').mkdir(exist_ok=True)
+          Path('tests/MeasurementSemanticsTest.cpp').write_text(r'''#include <tev/Measurement.h>
+
+#include <cstdlib>
+#include <iostream>
+#include <string_view>
+
+namespace {
+
+void require(bool condition, std::string_view message) {
+    if (!condition) {
+        std::cerr << "measurement semantic anchor failed: " << message << '\n';
+        std::exit(1);
+    }
+}
+
+bool sameVector(nanogui::Vector2i a, nanogui::Vector2i b) {
+    return a.x() == b.x() && a.y() == b.y();
+}
+
+bool sameBox(const tev::Box2i& a, const tev::Box2i& b) {
+    return sameVector(a.min, b.min) && sameVector(a.max, b.max);
+}
+
+void requireMeasurementStable(const tev::MeasurementSpec& actual, const tev::MeasurementSpec& expected) {
+    require(actual.candidate.has_value() == expected.candidate.has_value(), "candidate presence drifted");
+    require(actual.reference.has_value() == expected.reference.has_value(), "reference presence drifted");
+
+    if (actual.candidate && expected.candidate) {
+        require(actual.candidate->name == expected.candidate->name, "candidate identity drifted");
+        require(actual.candidate->runtimeId == expected.candidate->runtimeId, "candidate runtime id drifted");
+    }
+    if (actual.reference && expected.reference) {
+        require(actual.reference->name == expected.reference->name, "reference identity drifted");
+        require(actual.reference->runtimeId == expected.reference->runtimeId, "reference runtime id drifted");
+    }
+
+    require(
+        actual.sampling.interactivePolicy == expected.sampling.interactivePolicy,
+        "interactive correspondence policy drifted"
+    );
+    require(
+        actual.sampling.materializedPolicy == expected.sampling.materializedPolicy,
+        "materialized correspondence policy drifted"
+    );
+    require(
+        sameVector(actual.sampling.interactiveReferenceOffset, expected.sampling.interactiveReferenceOffset),
+        "interactive correspondence offset drifted"
+    );
+    require(
+        sameVector(actual.sampling.materializedReferenceOffset, expected.sampling.materializedReferenceOffset),
+        "materialized correspondence offset drifted"
+    );
+    require(actual.alphaPolicy == expected.alphaPolicy, "alpha policy drifted");
+    require(actual.channelGroup == expected.channelGroup, "channel group drifted");
+    require(sameBox(actual.region, expected.region), "region drifted");
+    require(actual.mask == expected.mask, "channel mask drifted");
+    require(actual.metric.kind == expected.metric.kind, "terminal metric drifted");
+    require(actual.metric.relativeEpsilon == expected.metric.relativeEpsilon, "metric epsilon drifted");
+}
+
+void requireProjection(
+    const tev::MeasurementLineage& lineage,
+    bool usesReference,
+    tev::EMetric effectiveMetric
+) {
+    const auto projection = tev::measurementStageProjection(
+        lineage.stage,
+        lineage.measurement.metric.kind,
+        lineage.measurement.reference.has_value()
+    );
+    require(projection.usesReference == usesReference, "reference projection is wrong");
+    require(projection.effectiveMetric == effectiveMetric, "metric projection is wrong");
+}
+
+} // namespace
+
+int main() {
+    using namespace tev;
+
+    MeasurementLineage lineage;
+    lineage.measurement.candidate = MeasurementInputRef{"candidate.exr", 11};
+    lineage.measurement.reference = MeasurementInputRef{"reference.exr", 22};
+    lineage.measurement.channelGroup = "RGB";
+    lineage.measurement.mask = EChannelMask::Red | EChannelMask::Green | EChannelMask::Blue;
+    lineage.measurement.region = Box2i{nanogui::Vector2i{100, 40}, nanogui::Vector2i{104, 44}};
+    lineage.measurement.metric.kind = EMetric::RelativeSquaredError;
+
+    const Box2i candidateWindow{nanogui::Vector2i{100, 40}, nanogui::Vector2i{104, 44}};
+    const Box2i referenceWindow{nanogui::Vector2i{0, 0}, nanogui::Vector2i{4, 4}};
+    lineage.measurement.sampling = measurementSamplingSpec(candidateWindow, referenceWindow);
+
+    require(
+        sameVector(lineage.measurement.sampling.interactiveReferenceOffset, nanogui::Vector2i{100, 40}),
+        "interactive correspondence did not preserve data-window coordinates"
+    );
+    require(
+        sameVector(lineage.measurement.sampling.materializedReferenceOffset, nanogui::Vector2i{0, 0}),
+        "materialized correspondence did not preserve centered image extents"
+    );
+    require(
+        !measurementCorrespondencePathsAgree(lineage.measurement.sampling),
+        "fixture must force T_interactive != T_materialized"
+    );
+
+    lineage.stage = MeasurementStage::MetricOutput;
+    const MeasurementSpec terminalMeasurement = lineage.measurement;
+
+    requireProjection(lineage, true, EMetric::RelativeSquaredError);
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    lineage.stage = *measurementUpstreamStage(lineage.stage);
+    require(lineage.stage == MeasurementStage::SignedDifference, "metric -> signed difference return failed");
+    requireProjection(lineage, true, EMetric::Error);
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    lineage.stage = *measurementUpstreamStage(lineage.stage);
+    require(lineage.stage == MeasurementStage::Inputs, "signed difference -> inputs return failed");
+    requireProjection(lineage, false, EMetric::RelativeSquaredError);
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    lineage.stage = *measurementDownstreamStage(lineage.stage);
+    require(lineage.stage == MeasurementStage::SignedDifference, "inputs -> signed difference traversal failed");
+    requireProjection(lineage, true, EMetric::Error);
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    lineage.stage = *measurementDownstreamStage(lineage.stage);
+    require(lineage.stage == MeasurementStage::MetricOutput, "signed difference -> metric traversal failed");
+    requireProjection(lineage, true, EMetric::RelativeSquaredError);
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    const auto stageBeforeViewChange = lineage.stage;
+    lineage.view.exposure = 4.0f;
+    lineage.view.offset = -0.25f;
+    lineage.view.gamma = 1.8f;
+    lineage.view.tonemap = ETonemap::FalseColor;
+    require(lineage.stage == stageBeforeViewChange, "view mutation changed stage");
+    requireMeasurementStable(lineage.measurement, terminalMeasurement);
+
+    std::cout << "measurement semantic anchor: correspondence divergence + round trip + view isolation OK\n";
+    return 0;
+}
+''')
+
+          p = Path('CMakeLists.txt')
+          s = p.read_text()
+          anchor = 'target_link_libraries(tev PRIVATE ${TEV_LIBS})\n'
+          addition = anchor + r'''
+
+# tev++ v0.1 semantic anchor: one deliberately small executable test. It is also
+# part of the default build so the inherited platform matrix gates returnability semantics.
+enable_testing()
+add_executable(tev_measurement_semantics_test tests/MeasurementSemanticsTest.cpp)
+target_include_directories(tev_measurement_semantics_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
+    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tinylogger
+)
+target_link_libraries(tev_measurement_semantics_test PRIVATE nanogui)
+add_test(NAME tev_measurement_semantics COMMAND tev_measurement_semantics_test)
+add_custom_target(tev_measurement_acceptance ALL
+    COMMAND $<TARGET_FILE:tev_measurement_semantics_test>
+    DEPENDS tev_measurement_semantics_test
+    COMMENT "Running tev++ v0.1 measurement semantic anchor"
+    VERBATIM
+)
+'''
+          if anchor not in s:
+              raise SystemExit('CMake link anchor not found')
+          s = s.replace(anchor, addition, 1)
+          p.write_text(s)
+          PY
+
+          git rm .github/workflows/apply-v01-semantic-anchor.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CMakeLists.txt include/tev/Measurement.h include/tev/ImageCanvas.h tests/MeasurementSemanticsTest.cpp
+          git commit -m "add v0.1 measurement semantic anchor"
+          git push origin HEAD:agent/measurement-v01-anchor
