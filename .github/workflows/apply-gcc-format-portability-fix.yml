@@ -1,0 +1,44 @@
+name: Apply GCC formatting portability fix
+
+on:
+  push:
+    branches:
+      - agent/measurement-v01-anchor
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/measurement-v01-anchor
+          fetch-depth: 0
+      - name: Apply demonstrated portability fix
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('include/tev/Measurement.h')
+          s = p.read_text()
+          old = '        lineage.measurement.region,\n'
+          new = '''        fmt::format(
+            "[({}, {}) - ({}, {})]",
+            lineage.measurement.region.min.x(),
+            lineage.measurement.region.min.y(),
+            lineage.measurement.region.max.x(),
+            lineage.measurement.region.max.y()
+        ),
+'''
+          if old not in s:
+              raise SystemExit('region formatting anchor not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git rm .github/workflows/apply-gcc-format-portability-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add include/tev/Measurement.h
+          git commit -m "fix GCC measurement region formatting"
+          git push origin HEAD:agent/measurement-v01-anchor
