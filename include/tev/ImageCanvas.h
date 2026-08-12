@@ -22,6 +22,7 @@
 #include <tev/Common.h>
 #include <tev/Image.h>
 #include <tev/Lazy.h>
+#include <tev/Measurement.h>
 #include <tev/UberShader.h>
 
 #include <nanogui/canvas.h>
@@ -56,14 +57,27 @@ public:
     void scale(float amount, nanogui::Vector2f origin);
     float scale() const { return extractScale(mTransform); }
 
+    float exposure() const { return mExposure; }
     void setExposure(float exposure) { mExposure = exposure; }
+    float offset() const { return mOffset; }
     void setOffset(float offset) { mOffset = offset; }
+    float gamma() const { return mGamma; }
     void setGamma(float gamma) { mGamma = gamma; }
+    float brightnessLimit() const { return mBrightnessLimit; }
     void setBrightnessLimit(float max) { mBrightnessLimit = max; }
+    float brightnessLimitSoftness() const { return mBrightnessLimitSoftness; }
     void setBrightnessLimitSoftness(float value) { mBrightnessLimitSoftness = value; }
 
-    void setImage(std::shared_ptr<Image> image) { mImage = image; }
-    void setReference(std::shared_ptr<Image> reference) { mReference = reference; }
+    void setImage(std::shared_ptr<Image> image) {
+        mImage = image;
+        mMeasurementStage = mMeasurementReference ? MeasurementStage::MetricOutput : MeasurementStage::Inputs;
+        syncMeasurementStage();
+    }
+    void setReference(std::shared_ptr<Image> reference) {
+        mMeasurementReference = reference;
+        mMeasurementStage = reference ? MeasurementStage::MetricOutput : MeasurementStage::Inputs;
+        syncMeasurementStage();
+    }
     void setRequestedChannelGroup(std::string_view groupName) { mRequestedChannelGroup = groupName; }
 
     nanogui::Vector2i getImageCoords(const Image* image, nanogui::Vector2i mousePos);
@@ -79,8 +93,76 @@ public:
     ETonemap tonemap() const { return mTonemap; }
     void setTonemap(ETonemap tonemap) { mTonemap = tonemap; }
 
-    EMetric metric() const { return mMetric; }
-    void setMetric(EMetric metric) { mMetric = metric; }
+    EMetric metric() const { return mMeasurementMetric; }
+    void setMetric(EMetric metric) {
+        mMeasurementMetric = metric;
+        mMeasurementStage = mMeasurementReference ? MeasurementStage::MetricOutput : MeasurementStage::Inputs;
+        syncMeasurementStage();
+    }
+
+    MeasurementStage measurementStage() const { return mMeasurementStage; }
+    void setMeasurementStage(MeasurementStage stage) {
+        if (!mMeasurementReference && stage != MeasurementStage::Inputs) {
+            stage = MeasurementStage::Inputs;
+        }
+
+        mMeasurementStage = stage;
+        syncMeasurementStage();
+    }
+
+    bool showUpstream() {
+        if (!mMeasurementReference) {
+            return false;
+        }
+
+        const auto upstream = measurementUpstreamStage(mMeasurementStage);
+        if (!upstream) {
+            return false;
+        }
+
+        setMeasurementStage(*upstream);
+        return true;
+    }
+
+    bool showDownstream() {
+        if (!mMeasurementReference) {
+            return false;
+        }
+
+        const auto downstream = measurementDownstreamStage(mMeasurementStage);
+        if (!downstream) {
+            return false;
+        }
+
+        setMeasurementStage(*downstream);
+        return true;
+    }
+
+    MeasurementLineage measurementLineage() const {
+        MeasurementLineage lineage;
+        if (mImage) {
+            lineage.measurement.candidate = MeasurementInputRef{std::string{mImage->name()}, mImage->id()};
+            lineage.measurement.region = cropInImageCoords();
+        }
+        if (mMeasurementReference) {
+            lineage.measurement.reference = MeasurementInputRef{std::string{mMeasurementReference->name()}, mMeasurementReference->id()};
+            if (mImage) {
+                lineage.measurement.sampling = measurementSamplingSpec(mImage->dataWindow(), mMeasurementReference->dataWindow());
+            }
+        }
+        lineage.measurement.channelGroup = mRequestedChannelGroup;
+        lineage.measurement.mask = mChannelMask;
+        lineage.measurement.metric.kind = mMeasurementMetric;
+        lineage.stage = mMeasurementStage;
+        lineage.view.tonemap = mTonemap;
+        lineage.view.exposure = mExposure;
+        lineage.view.offset = mOffset;
+        lineage.view.gamma = mGamma;
+        lineage.view.brightnessLimit = mBrightnessLimit;
+        lineage.view.brightnessLimitSoftness = mBrightnessLimitSoftness;
+        lineage.view.clipToLdr = mClipToLdr;
+        return lineage;
+    }
 
     bool areChannelsMasked(EChannelMask mask) const { return hasFlag(mChannelMask, mask); }
     EChannelMask channelMask() const { return mChannelMask; }
@@ -139,6 +221,19 @@ public:
     void applyInspectionParameters(std::vector<float>& values, bool hasAlpha);
 
 private:
+    // MeasurementSpec is kept separately from the effective render/statistics fields below.
+    // Moving upstream changes only the exposed stage; it does not destroy the selected
+    // terminal metric or reference that define the comparison.
+    void syncMeasurementStage() {
+        const auto projection = measurementStageProjection(
+            mMeasurementStage,
+            mMeasurementMetric,
+            static_cast<bool>(mMeasurementReference)
+        );
+        mReference = projection.usesReference ? mMeasurementReference : nullptr;
+        mMetric = projection.effectiveMetric;
+    }
+
     static Task<std::shared_ptr<CanvasStatistics>> computeCanvasStatistics(
         std::shared_ptr<Image> image,
         std::shared_ptr<Image> reference,
@@ -179,6 +274,9 @@ private:
 
     std::shared_ptr<Image> mImage;
     std::shared_ptr<Image> mReference;
+    std::shared_ptr<Image> mMeasurementReference;
+    EMetric mMeasurementMetric = EMetric::Error;
+    MeasurementStage mMeasurementStage = MeasurementStage::Inputs;
 
     std::string mRequestedChannelGroup = "";
 

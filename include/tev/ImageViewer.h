@@ -227,6 +227,7 @@ private:
     void updateFilter();
     void updateLayout();
     void updateTitle();
+    void updateMeasurementUi();
     std::string_view groupName(size_t index);
 
     std::optional<size_t> groupId(std::string_view groupName) const;
@@ -275,6 +276,9 @@ private:
 
     nanogui::Widget* mTonemapButtonContainer = nullptr;
     nanogui::Widget* mMetricButtonContainer = nullptr;
+    nanogui::Label* mMeasurementStageLabel = nullptr;
+    nanogui::Button* mShowUpstreamButton = nullptr;
+    nanogui::Button* mResumeDownstreamButton = nullptr;
     nanogui::Widget* mChannelMaskButtonContainer = nullptr;
 
     std::shared_ptr<BackgroundImagesLoader> mImagesLoader;
