@@ -1,0 +1,34 @@
+name: Finalize v0.1 PR tree
+
+on:
+  push:
+    branches:
+      - agent/measurement-v01-clean
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/measurement-v01-clean
+          fetch-depth: 0
+      - name: Build clean v0.1 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin agent/measurement-v01-anchor
+          git diff --binary \
+            0e32bf99b3082539855a02f94bbf542501ec782d \
+            FETCH_HEAD \
+            -- . ':(exclude).github/workflows/**' > /tmp/v01.patch
+          git apply /tmp/v01.patch
+          git rm .github/workflows/finalize-v01-pr.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "add inspectable measurement lineage"
+          git push --force origin HEAD:agent/measurement-lineage-v0.1
