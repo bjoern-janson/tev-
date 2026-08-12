@@ -284,6 +284,29 @@ endif()
 
 target_link_libraries(tev PRIVATE ${TEV_LIBS})
 
+# tev++ v0.1 semantic anchor: one deliberately small executable test. It is also
+# part of the default build so the inherited platform matrix gates returnability semantics.
+enable_testing()
+add_executable(tev_measurement_semantics_test tests/MeasurementSemanticsTest.cpp)
+target_include_directories(tev_measurement_semantics_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
+    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tinylogger
+)
+target_link_libraries(tev_measurement_semantics_test PRIVATE nanogui)
+if (MSVC)
+    # Measurement.h includes fmt, whose Unicode path requires UTF-8 source/execution
+    # character sets on MSVC. Match the main tev target's existing portability rule.
+    target_compile_options(tev_measurement_semantics_test PRIVATE /utf-8)
+endif()
+add_test(NAME tev_measurement_semantics COMMAND tev_measurement_semantics_test)
+add_custom_target(tev_measurement_acceptance ALL
+    COMMAND $<TARGET_FILE:tev_measurement_semantics_test>
+    DEPENDS tev_measurement_semantics_test
+    COMMENT "Running tev++ v0.1 measurement semantic anchor"
+    VERBATIM
+)
+
 # Custom compile options
 if (MSVC)
     # Enable more warnings
