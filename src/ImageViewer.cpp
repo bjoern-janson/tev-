@@ -574,6 +574,26 @@ ImageViewer::ImageViewer(
         );
     }
 
+    // Inspectable measurement lineage. This deliberately sits next to the existing metric
+    // controls: it does not introduce a new comparison engine, it exposes the stages already
+    // implicit in tev's candidate/reference path.
+    {
+        auto panel = new Widget{mSidebarLayout};
+        panel->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill, 5, 2});
+
+        mMeasurementStageLabel = new Label{panel, "", "sans-bold", 15};
+        mShowUpstreamButton = new Button{panel, "Upstream"};
+        mShowUpstreamButton->set_font_size(15);
+        mShowUpstreamButton->set_callback([this]() {
+            if (mImageCanvas->showUpstream()) {
+                updateMeasurementUi();
+                redraw();
+            }
+        });
+
+        updateMeasurementUi();
+    }
+
     // Image channel mask
     {
         mChannelMaskButtonContainer = new Widget{mSidebarLayout};
@@ -1300,6 +1320,7 @@ void ImageViewer::draw_contents() {
     }
 
     updateColorCapabilities();
+    updateMeasurementUi();
 
     // Update SDR white level from system settings if not overridden by the user
     if (displayWhiteLevelSetting() == EDisplayWhiteLevelSetting::System) {
@@ -2126,6 +2147,24 @@ void ImageViewer::setMetric(EMetric metric) {
         Button* b = dynamic_cast<Button*>(buttons[i]);
         b->set_pushed((EMetric)i == metric);
     }
+}
+
+void ImageViewer::updateMeasurementUi() {
+    if (!mMeasurementStageLabel || !mShowUpstreamButton) {
+        return;
+    }
+
+    const auto lineage = mImageCanvas->measurementLineage();
+    const auto details = describeMeasurementLineage(lineage);
+
+    mMeasurementStageLabel->set_caption(measurementStageCaption(lineage));
+    mMeasurementStageLabel->set_tooltip(details);
+
+    mShowUpstreamButton->set_caption(measurementUpstreamCaption(lineage));
+    mShowUpstreamButton->set_enabled(lineage.measurement.reference.has_value() && lineage.stage != MeasurementStage::Inputs);
+    mShowUpstreamButton->set_tooltip(fmt::format(
+        "Walk one representation upstream without changing the measurement specification.\n\n{}", details
+    ));
 }
 
 void ImageViewer::setChannelMask(EChannelMask channel, bool state) {
