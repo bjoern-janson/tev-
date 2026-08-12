@@ -1,0 +1,62 @@
+name: Diagnose measurement GCC ARM
+
+on:
+  push:
+    branches:
+      - agent/measurement-ci-diagnostic
+
+permissions:
+  contents: read
+
+env:
+  SUPPORT_HEIC: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04-arm
+    env:
+      build_dir: build
+      config: Release
+      CC: gcc
+      CXX: g++
+      APPIMAGE_EXTRACT_AND_RUN: 1
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libc++-dev \
+            libc++abi-dev \
+            libdbus-1-dev \
+            libffi-dev \
+            libglu1-mesa-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            nasm \
+            ninja-build \
+            wayland-protocols \
+            xorg-dev
+      - uses: actions/checkout@v1
+        with:
+          submodules: recursive
+      - name: Environment
+        run: |
+          uname -a
+          gcc --version
+          g++ --version
+          nproc
+          free -h
+      - name: CMake
+        run: cmake . -B ${{ env.build_dir }} -GNinja -DCMAKE_BUILD_TYPE=${{ env.config }} -DTEV_DEPLOY=1 -DTEV_SUPPORT_HEIC=${{ env.SUPPORT_HEIC }}
+      - name: Build with captured output
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake --build ${{ env.build_dir }} --target all --verbose -j 2>&1 | tee measurement-gcc-arm-build.log
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: measurement-gcc-arm-build-log
+          path: measurement-gcc-arm-build.log
