@@ -1,4 +1,28 @@
-# tev — The EDR Viewer &nbsp;&nbsp; ![](https://github.com/tom94/tev/workflows/CI/badge.svg)
+# tev++ — inspectable measurements
+
+> **tev, but comparisons can explain themselves.**
+
+tev++ is a small fork of [tev](https://github.com/Tom94/tev) that keeps tev's fast HDR/EDR viewer and comparison machinery while making measurement lineage inspectable.
+
+The v0.1 architecture is deliberately small:
+
+```text
+MeasurementSpec -> MeasurementStage -> ViewSpec
+
+Inputs -> Signed Difference -> Metric Output
+```
+
+When a reference comparison is active, **Show Upstream** walks backward through those existing representations without changing the measurement specification: metric output → signed difference → inputs. **Resume** traverses the same retained live lineage downstream again: inputs → signed difference → metric output. This is return traversal, not reconstruction from a stored recipe. The measurement readout keeps the candidate, reference, correspondence, channels, region, selected metric, fixed relative epsilon (`0.01`), and presentation state inspectable in one place.
+
+tev currently uses different correspondence paths for interactive display/pixel inspection and materialized CPU comparisons used by statistics/export. tev++ records both and calls out when their offsets differ rather than silently treating them as one operator.
+
+The core invariant is simple: **view state may change how a stage is presented, but it must not change what was measured or what the stage means.**
+
+The binary and the rest of the codebase intentionally remain close to upstream tev.
+
+## Upstream tev
+
+### The EDR Viewer &nbsp;&nbsp; ![](https://github.com/bjoern-janson/tevpp/actions/workflows/main.yml/badge.svg)
 
 High dynamic range (HDR) image viewer for people who care about colors.
 
