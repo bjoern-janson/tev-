@@ -12,7 +12,7 @@ MeasurementSpec -> MeasurementStage -> ViewSpec
 Inputs -> Signed Difference -> Metric Output
 ```
 
-When a reference comparison is active, **Show Upstream** walks backward through those existing representations without changing the measurement specification: metric output → signed difference → inputs. The measurement readout keeps the candidate, reference, correspondence, channels, region, selected metric, fixed relative epsilon (`0.01`), and presentation state inspectable in one place.
+When a reference comparison is active, **Show Upstream** walks backward through those existing representations without changing the measurement specification: metric output → signed difference → inputs. **Resume** traverses the same retained live lineage downstream again: inputs → signed difference → metric output. This is return traversal, not reconstruction from a stored recipe. The measurement readout keeps the candidate, reference, correspondence, channels, region, selected metric, fixed relative epsilon (`0.01`), and presentation state inspectable in one place.
 
 tev currently uses different correspondence paths for interactive display/pixel inspection and materialized CPU comparisons used by statistics/export. tev++ records both and calls out when their offsets differ rather than silently treating them as one operator.
 
@@ -22,7 +22,7 @@ The binary and the rest of the codebase intentionally remain close to upstream t
 
 ## Upstream tev
 
-### The EDR Viewer &nbsp;&nbsp; ![](https://github.com/bjoern-janson/tev-/actions/workflows/main.yml/badge.svg)
+### The EDR Viewer &nbsp;&nbsp; ![](https://github.com/bjoern-janson/tevpp/actions/workflows/main.yml/badge.svg)
 
 High dynamic range (HDR) image viewer for people who care about colors.
 
