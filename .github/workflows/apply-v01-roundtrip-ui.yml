@@ -1,0 +1,56 @@
+name: Apply v0.1 round-trip UI
+
+on:
+  push:
+    branches:
+      - agent/measurement-v01-anchor
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/measurement-v01-anchor
+          fetch-depth: 0
+      - name: Apply round-trip UI
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          decode = lambda value: base64.b64decode(value).decode()
+          replacements = {
+            'include/tev/ImageCanvas.h': [
+              ('ICAgIGJvb2wgc2hvd1Vwc3RyZWFtKCkgewogICAgICAgIGlmICghbU1lYXN1cmVtZW50UmVmZXJlbmNlKSB7CiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICB9CgogICAgICAgIGNvbnN0IGF1dG8gdXBzdHJlYW0gPSBtZWFzdXJlbWVudFVwc3RyZWFtU3RhZ2UobU1lYXN1cmVtZW50U3RhZ2UpOwogICAgICAgIGlmICghdXBzdHJlYW0pIHsKICAgICAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICAgIH0KCiAgICAgICAgc2V0TWVhc3VyZW1lbnRTdGFnZSgqdXBzdHJlYW0pOwogICAgICAgIHJldHVybiB0cnVlOwogICAgfQoK', 'ICAgIGJvb2wgc2hvd1Vwc3RyZWFtKCkgewogICAgICAgIGlmICghbU1lYXN1cmVtZW50UmVmZXJlbmNlKSB7CiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICB9CgogICAgICAgIGNvbnN0IGF1dG8gdXBzdHJlYW0gPSBtZWFzdXJlbWVudFVwc3RyZWFtU3RhZ2UobU1lYXN1cmVtZW50U3RhZ2UpOwogICAgICAgIGlmICghdXBzdHJlYW0pIHsKICAgICAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICAgIH0KCiAgICAgICAgc2V0TWVhc3VyZW1lbnRTdGFnZSgqdXBzdHJlYW0pOwogICAgICAgIHJldHVybiB0cnVlOwogICAgfQoKICAgIGJvb2wgc2hvd0Rvd25zdHJlYW0oKSB7CiAgICAgICAgaWYgKCFtTWVhc3VyZW1lbnRSZWZlcmVuY2UpIHsKICAgICAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICAgIH0KCiAgICAgICAgY29uc3QgYXV0byBkb3duc3RyZWFtID0gbWVhc3VyZW1lbnREb3duc3RyZWFtU3RhZ2UobU1lYXN1cmVtZW50U3RhZ2UpOwogICAgICAgIGlmICghZG93bnN0cmVhbSkgewogICAgICAgICAgICByZXR1cm4gZmFsc2U7CiAgICAgICAgfQoKICAgICAgICBzZXRNZWFzdXJlbWVudFN0YWdlKCpkb3duc3RyZWFtKTsKICAgICAgICByZXR1cm4gdHJ1ZTsKICAgIH0KCg==')
+            ],
+            'include/tev/Measurement.h': [
+              ('aW5saW5lIHN0ZDo6c3RyaW5nIG1lYXN1cmVtZW50VXBzdHJlYW1DYXB0aW9uKGNvbnN0IE1lYXN1cmVtZW50TGluZWFnZSYgbGluZWFnZSkgewogICAgc3dpdGNoIChsaW5lYWdlLnN0YWdlKSB7CiAgICAgICAgY2FzZSBNZWFzdXJlbWVudFN0YWdlOjpNZXRyaWNPdXRwdXQ6IHJldHVybiAiVXA6IGRpZmYiOwogICAgICAgIGNhc2UgTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZTogcmV0dXJuICJVcDogaW5wdXRzIjsKICAgICAgICBjYXNlIE1lYXN1cmVtZW50U3RhZ2U6OklucHV0czogcmV0dXJuICJVcHN0cmVhbSI7CiAgICAgICAgZGVmYXVsdDogcmV0dXJuICJVcHN0cmVhbSI7CiAgICB9Cn0KCg==', 'aW5saW5lIHN0ZDo6c3RyaW5nIG1lYXN1cmVtZW50VXBzdHJlYW1DYXB0aW9uKGNvbnN0IE1lYXN1cmVtZW50TGluZWFnZSYgbGluZWFnZSkgewogICAgc3dpdGNoIChsaW5lYWdlLnN0YWdlKSB7CiAgICAgICAgY2FzZSBNZWFzdXJlbWVudFN0YWdlOjpNZXRyaWNPdXRwdXQ6IHJldHVybiAiVXA6IGRpZmYiOwogICAgICAgIGNhc2UgTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZTogcmV0dXJuICJVcDogaW5wdXRzIjsKICAgICAgICBjYXNlIE1lYXN1cmVtZW50U3RhZ2U6OklucHV0czogcmV0dXJuICJVcHN0cmVhbSI7CiAgICAgICAgZGVmYXVsdDogcmV0dXJuICJVcHN0cmVhbSI7CiAgICB9Cn0KCmlubGluZSBzdGQ6OnN0cmluZyBtZWFzdXJlbWVudERvd25zdHJlYW1DYXB0aW9uKGNvbnN0IE1lYXN1cmVtZW50TGluZWFnZSYgbGluZWFnZSkgewogICAgc3dpdGNoIChsaW5lYWdlLnN0YWdlKSB7CiAgICAgICAgY2FzZSBNZWFzdXJlbWVudFN0YWdlOjpJbnB1dHM6IHJldHVybiAiUmVzdW1lOiBkaWZmIjsKICAgICAgICBjYXNlIE1lYXN1cmVtZW50U3RhZ2U6OlNpZ25lZERpZmZlcmVuY2U6IHJldHVybiAiUmVzdW1lOiBtZXRyaWMiOwogICAgICAgIGNhc2UgTWVhc3VyZW1lbnRTdGFnZTo6TWV0cmljT3V0cHV0OiByZXR1cm4gIlJlc3VtZSI7CiAgICAgICAgZGVmYXVsdDogcmV0dXJuICJSZXN1bWUiOwogICAgfQp9Cgo=')
+            ],
+            'include/tev/ImageViewer.h': [
+              ('ICAgIG5hbm9ndWk6OkxhYmVsKiBtTWVhc3VyZW1lbnRTdGFnZUxhYmVsID0gbnVsbHB0cjsKICAgIG5hbm9ndWk6OkJ1dHRvbiogbVNob3dVcHN0cmVhbUJ1dHRvbiA9IG51bGxwdHI7Cg==', 'ICAgIG5hbm9ndWk6OkxhYmVsKiBtTWVhc3VyZW1lbnRTdGFnZUxhYmVsID0gbnVsbHB0cjsKICAgIG5hbm9ndWk6OkJ1dHRvbiogbVNob3dVcHN0cmVhbUJ1dHRvbiA9IG51bGxwdHI7CiAgICBuYW5vZ3VpOjpCdXR0b24qIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uID0gbnVsbHB0cjsK')
+            ],
+            'src/ImageViewer.cpp': [
+              ('ICAgICAgICBhdXRvIHBhbmVsID0gbmV3IFdpZGdldHttU2lkZWJhckxheW91dH07CiAgICAgICAgcGFuZWwtPnNldF9sYXlvdXQobmV3IEdyaWRMYXlvdXR7T3JpZW50YXRpb246Okhvcml6b250YWwsIDIsIEFsaWdubWVudDo6RmlsbCwgNSwgMn0pOwoKICAgICAgICBtTWVhc3VyZW1lbnRTdGFnZUxhYmVsID0gbmV3IExhYmVse3BhbmVsLCAiIiwgInNhbnMtYm9sZCIsIDE1fTsKICAgICAgICBtU2hvd1Vwc3RyZWFtQnV0dG9uID0gbmV3IEJ1dHRvbntwYW5lbCwgIlVwc3RyZWFtIn07CiAgICAgICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2ZvbnRfc2l6ZSgxNSk7CiAgICAgICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2NhbGxiYWNrKFt0aGlzXSgpIHsKICAgICAgICAgICAgaWYgKG1JbWFnZUNhbnZhcy0+c2hvd1Vwc3RyZWFtKCkpIHsKICAgICAgICAgICAgICAgIHVwZGF0ZU1lYXN1cmVtZW50VWkoKTsKICAgICAgICAgICAgICAgIHJlZHJhdygpOwogICAgICAgICAgICB9CiAgICAgICAgfSk7CgogICAgICAgIHVwZGF0ZU1lYXN1cmVtZW50VWkoKTsK', 'ICAgICAgICBhdXRvIHBhbmVsID0gbmV3IFdpZGdldHttU2lkZWJhckxheW91dH07CiAgICAgICAgcGFuZWwtPnNldF9sYXlvdXQobmV3IEdyaWRMYXlvdXR7T3JpZW50YXRpb246Okhvcml6b250YWwsIDMsIEFsaWdubWVudDo6RmlsbCwgNSwgMn0pOwoKICAgICAgICBtTWVhc3VyZW1lbnRTdGFnZUxhYmVsID0gbmV3IExhYmVse3BhbmVsLCAiIiwgInNhbnMtYm9sZCIsIDE1fTsKICAgICAgICBtU2hvd1Vwc3RyZWFtQnV0dG9uID0gbmV3IEJ1dHRvbntwYW5lbCwgIlVwc3RyZWFtIn07CiAgICAgICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2ZvbnRfc2l6ZSgxNSk7CiAgICAgICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2NhbGxiYWNrKFt0aGlzXSgpIHsKICAgICAgICAgICAgaWYgKG1JbWFnZUNhbnZhcy0+c2hvd1Vwc3RyZWFtKCkpIHsKICAgICAgICAgICAgICAgIHVwZGF0ZU1lYXN1cmVtZW50VWkoKTsKICAgICAgICAgICAgICAgIHJlZHJhdygpOwogICAgICAgICAgICB9CiAgICAgICAgfSk7CgogICAgICAgIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uID0gbmV3IEJ1dHRvbntwYW5lbCwgIlJlc3VtZSJ9OwogICAgICAgIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uLT5zZXRfZm9udF9zaXplKDE1KTsKICAgICAgICBtUmVzdW1lRG93bnN0cmVhbUJ1dHRvbi0+c2V0X2NhbGxiYWNrKFt0aGlzXSgpIHsKICAgICAgICAgICAgaWYgKG1JbWFnZUNhbnZhcy0+c2hvd0Rvd25zdHJlYW0oKSkgewogICAgICAgICAgICAgICAgdXBkYXRlTWVhc3VyZW1lbnRVaSgpOwogICAgICAgICAgICAgICAgcmVkcmF3KCk7CiAgICAgICAgICAgIH0KICAgICAgICB9KTsKCiAgICAgICAgdXBkYXRlTWVhc3VyZW1lbnRVaSgpOwo='),
+              ('ICAgIGlmICghbU1lYXN1cmVtZW50U3RhZ2VMYWJlbCB8fCAhbVNob3dVcHN0cmVhbUJ1dHRvbikgewogICAgICAgIHJldHVybjsKICAgIH0KCiAgICBjb25zdCBhdXRvIGxpbmVhZ2UgPSBtSW1hZ2VDYW52YXMtPm1lYXN1cmVtZW50TGluZWFnZSgpOwogICAgY29uc3QgYXV0byBkZXRhaWxzID0gZGVzY3JpYmVNZWFzdXJlbWVudExpbmVhZ2UobGluZWFnZSk7CgogICAgbU1lYXN1cmVtZW50U3RhZ2VMYWJlbC0+c2V0X2NhcHRpb24obWVhc3VyZW1lbnRTdGFnZUNhcHRpb24obGluZWFnZSkpOwogICAgbU1lYXN1cmVtZW50U3RhZ2VMYWJlbC0+c2V0X3Rvb2x0aXAoZGV0YWlscyk7CgogICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2NhcHRpb24obWVhc3VyZW1lbnRVcHN0cmVhbUNhcHRpb24obGluZWFnZSkpOwogICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X2VuYWJsZWQobGluZWFnZS5tZWFzdXJlbWVudC5yZWZlcmVuY2UuaGFzX3ZhbHVlKCkgJiYgbGluZWFnZS5zdGFnZSAhPSBNZWFzdXJlbWVudFN0YWdlOjpJbnB1dHMpOwogICAgbVNob3dVcHN0cmVhbUJ1dHRvbi0+c2V0X3Rvb2x0aXAoZm10Ojpmb3JtYXQoCiAgICAgICAgIldhbGsgb25lIHJlcHJlc2VudGF0aW9uIHVwc3RyZWFtIHdpdGhvdXQgY2hhbmdpbmcgdGhlIG1lYXN1cmVtZW50IHNwZWNpZmljYXRpb24uXG5cbnt9IiwgZGV0YWlscwogICAgKSk7Cg==', 'ICAgIGlmICghbU1lYXN1cmVtZW50U3RhZ2VMYWJlbCB8fCAhbVNob3dVcHN0cmVhbUJ1dHRvbiB8fCAhbVJlc3VtZURvd25zdHJlYW1CdXR0b24pIHsKICAgICAgICByZXR1cm47CiAgICB9CgogICAgY29uc3QgYXV0byBsaW5lYWdlID0gbUltYWdlQ2FudmFzLT5tZWFzdXJlbWVudExpbmVhZ2UoKTsKICAgIGNvbnN0IGF1dG8gZGV0YWlscyA9IGRlc2NyaWJlTWVhc3VyZW1lbnRMaW5lYWdlKGxpbmVhZ2UpOwoKICAgIG1NZWFzdXJlbWVudFN0YWdlTGFiZWwtPnNldF9jYXB0aW9uKG1lYXN1cmVtZW50U3RhZ2VDYXB0aW9uKGxpbmVhZ2UpKTsKICAgIG1NZWFzdXJlbWVudFN0YWdlTGFiZWwtPnNldF90b29sdGlwKGRldGFpbHMpOwoKICAgIG1TaG93VXBzdHJlYW1CdXR0b24tPnNldF9jYXB0aW9uKG1lYXN1cmVtZW50VXBzdHJlYW1DYXB0aW9uKGxpbmVhZ2UpKTsKICAgIG1TaG93VXBzdHJlYW1CdXR0b24tPnNldF9lbmFibGVkKGxpbmVhZ2UubWVhc3VyZW1lbnQucmVmZXJlbmNlLmhhc192YWx1ZSgpICYmIGxpbmVhZ2Uuc3RhZ2UgIT0gTWVhc3VyZW1lbnRTdGFnZTo6SW5wdXRzKTsKICAgIG1TaG93VXBzdHJlYW1CdXR0b24tPnNldF90b29sdGlwKGZtdDo6Zm9ybWF0KAogICAgICAgICJXYWxrIG9uZSByZXByZXNlbnRhdGlvbiB1cHN0cmVhbSB3aXRob3V0IGNoYW5naW5nIHRoZSBtZWFzdXJlbWVudCBzcGVjaWZpY2F0aW9uLlxuXG57fSIsIGRldGFpbHMKICAgICkpOwoKICAgIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uLT5zZXRfY2FwdGlvbihtZWFzdXJlbWVudERvd25zdHJlYW1DYXB0aW9uKGxpbmVhZ2UpKTsKICAgIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uLT5zZXRfZW5hYmxlZCgKICAgICAgICBsaW5lYWdlLm1lYXN1cmVtZW50LnJlZmVyZW5jZS5oYXNfdmFsdWUoKSAmJiBsaW5lYWdlLnN0YWdlICE9IE1lYXN1cmVtZW50U3RhZ2U6Ok1ldHJpY091dHB1dAogICAgKTsKICAgIG1SZXN1bWVEb3duc3RyZWFtQnV0dG9uLT5zZXRfdG9vbHRpcChmbXQ6OmZvcm1hdCgKICAgICAgICAiUmVzdW1lIG9uZSByZXByZXNlbnRhdGlvbiBkb3duc3RyZWFtIHVzaW5nIHRoZSByZXRhaW5lZCBsaXZlIG1lYXN1cmVtZW50IHNwZWNpZmljYXRpb24uICIKICAgICAgICAiVGhpcyBpcyBzdGFnZSB0cmF2ZXJzYWwsIG5vdCByZWNvbnN0cnVjdGlvbiBmcm9tIGEgc3RvcmVkIHJlY2lwZS5cblxue30iLAogICAgICAgIGRldGFpbHMKICAgICkpOwo=')
+            ]
+          }
+          for path, pairs in replacements.items():
+              p = Path(path)
+              s = p.read_text()
+              for old64, new64 in pairs:
+                  old, new = decode(old64), decode(new64)
+                  if old not in s:
+                      raise SystemExit(f'round-trip UI anchor not found in {path}')
+                  s = s.replace(old, new, 1)
+              p.write_text(s)
+          PY
+          git rm .github/workflows/apply-v01-roundtrip-ui.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add include/tev/ImageCanvas.h include/tev/Measurement.h include/tev/ImageViewer.h src/ImageViewer.cpp
+          git commit -m "make measurement stage traversal bidirectional"
+          git push origin HEAD:agent/measurement-v01-anchor
