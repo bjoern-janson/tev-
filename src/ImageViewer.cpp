@@ -579,13 +579,22 @@ ImageViewer::ImageViewer(
     // implicit in tev's candidate/reference path.
     {
         auto panel = new Widget{mSidebarLayout};
-        panel->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill, 5, 2});
+        panel->set_layout(new GridLayout{Orientation::Horizontal, 3, Alignment::Fill, 5, 2});
 
         mMeasurementStageLabel = new Label{panel, "", "sans-bold", 15};
         mShowUpstreamButton = new Button{panel, "Upstream"};
         mShowUpstreamButton->set_font_size(15);
         mShowUpstreamButton->set_callback([this]() {
             if (mImageCanvas->showUpstream()) {
+                updateMeasurementUi();
+                redraw();
+            }
+        });
+
+        mResumeDownstreamButton = new Button{panel, "Resume"};
+        mResumeDownstreamButton->set_font_size(15);
+        mResumeDownstreamButton->set_callback([this]() {
+            if (mImageCanvas->showDownstream()) {
                 updateMeasurementUi();
                 redraw();
             }
@@ -2150,7 +2159,7 @@ void ImageViewer::setMetric(EMetric metric) {
 }
 
 void ImageViewer::updateMeasurementUi() {
-    if (!mMeasurementStageLabel || !mShowUpstreamButton) {
+    if (!mMeasurementStageLabel || !mShowUpstreamButton || !mResumeDownstreamButton) {
         return;
     }
 
@@ -2164,6 +2173,16 @@ void ImageViewer::updateMeasurementUi() {
     mShowUpstreamButton->set_enabled(lineage.measurement.reference.has_value() && lineage.stage != MeasurementStage::Inputs);
     mShowUpstreamButton->set_tooltip(fmt::format(
         "Walk one representation upstream without changing the measurement specification.\n\n{}", details
+    ));
+
+    mResumeDownstreamButton->set_caption(measurementDownstreamCaption(lineage));
+    mResumeDownstreamButton->set_enabled(
+        lineage.measurement.reference.has_value() && lineage.stage != MeasurementStage::MetricOutput
+    );
+    mResumeDownstreamButton->set_tooltip(fmt::format(
+        "Resume one representation downstream using the retained live measurement specification. "
+        "This is stage traversal, not reconstruction from a stored recipe.\n\n{}",
+        details
     ));
 }
 

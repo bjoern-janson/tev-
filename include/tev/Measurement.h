@@ -203,6 +203,15 @@ inline std::string measurementUpstreamCaption(const MeasurementLineage& lineage)
     }
 }
 
+inline std::string measurementDownstreamCaption(const MeasurementLineage& lineage) {
+    switch (lineage.stage) {
+        case MeasurementStage::Inputs: return "Resume: diff";
+        case MeasurementStage::SignedDifference: return "Resume: metric";
+        case MeasurementStage::MetricOutput: return "Resume";
+        default: return "Resume";
+    }
+}
+
 inline std::string measurementOffsetFormula(std::string_view name, nanogui::Vector2i offset) {
     return fmt::format("{}(x,y)=(x{:+d}, y{:+d})", name, offset.x(), offset.y());
 }

@@ -278,6 +278,7 @@ private:
     nanogui::Widget* mMetricButtonContainer = nullptr;
     nanogui::Label* mMeasurementStageLabel = nullptr;
     nanogui::Button* mShowUpstreamButton = nullptr;
+    nanogui::Button* mResumeDownstreamButton = nullptr;
     nanogui::Widget* mChannelMaskButtonContainer = nullptr;
 
     std::shared_ptr<BackgroundImagesLoader> mImagesLoader;

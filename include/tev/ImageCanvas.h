@@ -124,6 +124,20 @@ public:
         return true;
     }
 
+    bool showDownstream() {
+        if (!mMeasurementReference) {
+            return false;
+        }
+
+        const auto downstream = measurementDownstreamStage(mMeasurementStage);
+        if (!downstream) {
+            return false;
+        }
+
+        setMeasurementStage(*downstream);
+        return true;
+    }
+
     MeasurementLineage measurementLineage() const {
         MeasurementLineage lineage;
         if (mImage) {
