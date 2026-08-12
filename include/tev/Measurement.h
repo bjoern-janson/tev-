@@ -212,6 +212,16 @@ inline bool measurementCorrespondencePathsAgree(const MeasurementSamplingSpec& s
         sampling.interactiveReferenceOffset.y() == sampling.materializedReferenceOffset.y();
 }
 
+inline std::string measurementRegionFormula(const Box2i& region) {
+    return fmt::format(
+        "[({}, {}) - ({}, {})]",
+        region.min.x(),
+        region.min.y(),
+        region.max.x(),
+        region.max.y()
+    );
+}
+
 inline std::string describeMeasurementLineage(const MeasurementLineage& lineage) {
     const auto candidate = lineage.measurement.candidate ?
         fmt::format("{} [runtime id {}]", lineage.measurement.candidate->name, lineage.measurement.candidate->runtimeId) :
@@ -256,7 +266,7 @@ inline std::string describeMeasurementLineage(const MeasurementLineage& lineage)
         samplingAgreement,
         lineage.measurement.channelGroup.empty() ? "<none>" : lineage.measurement.channelGroup,
         static_cast<int>(lineage.measurement.mask),
-        lineage.measurement.region,
+        measurementRegionFormula(lineage.measurement.region),
         measurementMetricName(lineage.measurement.metric.kind),
         measurementMetricFormula(lineage.measurement.metric),
         measurementTonemapName(lineage.view.tonemap),
