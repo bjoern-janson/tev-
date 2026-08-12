@@ -20,21 +20,19 @@ jobs:
         shell: bash
         run: |
           python3 - <<'PY'
+          import base64
           from pathlib import Path
+          decode = lambda value: base64.b64decode(value).decode()
+          old_helper = decode('aW5saW5lIGJvb2wgbWVhc3VyZW1lbnRDb3JyZXNwb25kZW5jZVBhdGhzQWdyZWUoY29uc3QgTWVhc3VyZW1lbnRTYW1wbGluZ1NwZWMmIHNhbXBsaW5nKSB7CiAgICByZXR1cm4gc2FtcGxpbmcuaW50ZXJhY3RpdmVSZWZlcmVuY2VPZmZzZXQueCgpID09IHNhbXBsaW5nLm1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldC54KCkgJiYKICAgICAgICBzYW1wbGluZy5pbnRlcmFjdGl2ZVJlZmVyZW5jZU9mZnNldC55KCkgPT0gc2FtcGxpbmcubWF0ZXJpYWxpemVkUmVmZXJlbmNlT2Zmc2V0LnkoKTsKfQoK')
+          new_helper = decode('aW5saW5lIGJvb2wgbWVhc3VyZW1lbnRDb3JyZXNwb25kZW5jZVBhdGhzQWdyZWUoY29uc3QgTWVhc3VyZW1lbnRTYW1wbGluZ1NwZWMmIHNhbXBsaW5nKSB7CiAgICByZXR1cm4gc2FtcGxpbmcuaW50ZXJhY3RpdmVSZWZlcmVuY2VPZmZzZXQueCgpID09IHNhbXBsaW5nLm1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldC54KCkgJiYKICAgICAgICBzYW1wbGluZy5pbnRlcmFjdGl2ZVJlZmVyZW5jZU9mZnNldC55KCkgPT0gc2FtcGxpbmcubWF0ZXJpYWxpemVkUmVmZXJlbmNlT2Zmc2V0LnkoKTsKfQoKaW5saW5lIHN0ZDo6c3RyaW5nIG1lYXN1cmVtZW50UmVnaW9uRm9ybXVsYShjb25zdCBCb3gyaSYgcmVnaW9uKSB7CiAgICByZXR1cm4gZm10Ojpmb3JtYXQoCiAgICAgICAgIlsoe30sIHt9KSAtICh7fSwge30pXSIsCiAgICAgICAgcmVnaW9uLm1pbi54KCksCiAgICAgICAgcmVnaW9uLm1pbi55KCksCiAgICAgICAgcmVnaW9uLm1heC54KCksCiAgICAgICAgcmVnaW9uLm1heC55KCkKICAgICk7Cn0KCg==')
+          old_arg = decode('ICAgICAgICBsaW5lYWdlLm1lYXN1cmVtZW50LnJlZ2lvbiwK')
+          new_arg = decode('ICAgICAgICBtZWFzdXJlbWVudFJlZ2lvbkZvcm11bGEobGluZWFnZS5tZWFzdXJlbWVudC5yZWdpb24pLAo=')
           p = Path('include/tev/Measurement.h')
           s = p.read_text()
-          old = '        lineage.measurement.region,\n'
-          new = '''        fmt::format(
-            "[({}, {}) - ({}, {})]",
-            lineage.measurement.region.min.x(),
-            lineage.measurement.region.min.y(),
-            lineage.measurement.region.max.x(),
-            lineage.measurement.region.max.y()
-        ),
-'''
-          if old not in s:
-              raise SystemExit('region formatting anchor not found')
-          p.write_text(s.replace(old, new, 1))
+          if old_helper not in s or old_arg not in s:
+              raise SystemExit('formatting portability anchors not found')
+          s = s.replace(old_helper, new_helper, 1).replace(old_arg, new_arg, 1)
+          p.write_text(s)
           PY
           git rm .github/workflows/apply-gcc-format-portability-fix.yml
           git config user.name "github-actions[bot]"
