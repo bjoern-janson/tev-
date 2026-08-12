@@ -20,333 +20,50 @@ jobs:
         shell: bash
         run: |
           python3 - <<'PY'
+          import base64
           from pathlib import Path
-
+          def d(value):
+              return base64.b64decode(value).decode()
+          replacements = {
+              'sampling_old': 'c3RydWN0IE1lYXN1cmVtZW50U2FtcGxpbmdTcGVjIHsKICAgIEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5IGludGVyYWN0aXZlUG9saWN5ID0gRU1lYXN1cmVtZW50Q29ycmVzcG9uZGVuY2VQb2xpY3k6OkRhdGFXaW5kb3dDb29yZGluYXRlczsKICAgIG5hbm9ndWk6OlZlY3RvcjJpIGludGVyYWN0aXZlUmVmZXJlbmNlT2Zmc2V0ID0gezAsIDB9OwoKICAgIEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5IG1hdGVyaWFsaXplZFBvbGljeSA9IEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5OjpDZW50ZXJlZEltYWdlRXh0ZW50czsKICAgIG5hbm9ndWk6OlZlY3RvcjJpIG1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldCA9IHswLCAwfTsKfTsK',
+              'sampling_new': 'c3RydWN0IE1lYXN1cmVtZW50U2FtcGxpbmdTcGVjIHsKICAgIEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5IGludGVyYWN0aXZlUG9saWN5ID0gRU1lYXN1cmVtZW50Q29ycmVzcG9uZGVuY2VQb2xpY3k6OkRhdGFXaW5kb3dDb29yZGluYXRlczsKICAgIG5hbm9ndWk6OlZlY3RvcjJpIGludGVyYWN0aXZlUmVmZXJlbmNlT2Zmc2V0ID0gezAsIDB9OwoKICAgIEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5IG1hdGVyaWFsaXplZFBvbGljeSA9IEVNZWFzdXJlbWVudENvcnJlc3BvbmRlbmNlUG9saWN5OjpDZW50ZXJlZEltYWdlRXh0ZW50czsKICAgIG5hbm9ndWk6OlZlY3RvcjJpIG1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldCA9IHswLCAwfTsKfTsKCmlubGluZSBNZWFzdXJlbWVudFNhbXBsaW5nU3BlYyBtZWFzdXJlbWVudFNhbXBsaW5nU3BlYyhCb3gyaSBjYW5kaWRhdGVEYXRhV2luZG93LCBCb3gyaSByZWZlcmVuY2VEYXRhV2luZG93KSB7CiAgICBNZWFzdXJlbWVudFNhbXBsaW5nU3BlYyByZXN1bHQ7CiAgICByZXN1bHQuaW50ZXJhY3RpdmVSZWZlcmVuY2VPZmZzZXQgPSBjYW5kaWRhdGVEYXRhV2luZG93Lm1pbiAtIHJlZmVyZW5jZURhdGFXaW5kb3cubWluOwogICAgcmVzdWx0Lm1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldCA9IChyZWZlcmVuY2VEYXRhV2luZG93LnNpemUoKSAtIGNhbmRpZGF0ZURhdGFXaW5kb3cuc2l6ZSgpKSAvIDI7CiAgICByZXR1cm4gcmVzdWx0Owp9Cg==',
+              'lineage_old': 'c3RydWN0IE1lYXN1cmVtZW50TGluZWFnZSB7CiAgICBNZWFzdXJlbWVudFNwZWMgbWVhc3VyZW1lbnQ7CiAgICBNZWFzdXJlbWVudFN0YWdlIHN0YWdlID0gTWVhc3VyZW1lbnRTdGFnZTo6SW5wdXRzOwogICAgVmlld1NwZWMgdmlldzsKfTsK',
+              'lineage_new': 'c3RydWN0IE1lYXN1cmVtZW50TGluZWFnZSB7CiAgICBNZWFzdXJlbWVudFNwZWMgbWVhc3VyZW1lbnQ7CiAgICBNZWFzdXJlbWVudFN0YWdlIHN0YWdlID0gTWVhc3VyZW1lbnRTdGFnZTo6SW5wdXRzOwogICAgVmlld1NwZWMgdmlldzsKfTsKCnN0cnVjdCBNZWFzdXJlbWVudFN0YWdlUHJvamVjdGlvbiB7CiAgICBib29sIHVzZXNSZWZlcmVuY2UgPSBmYWxzZTsKICAgIEVNZXRyaWMgZWZmZWN0aXZlTWV0cmljID0gRU1ldHJpYzo6RXJyb3I7Cn07CgppbmxpbmUgTWVhc3VyZW1lbnRTdGFnZVByb2plY3Rpb24gbWVhc3VyZW1lbnRTdGFnZVByb2plY3Rpb24oCiAgICBNZWFzdXJlbWVudFN0YWdlIHN0YWdlLAogICAgRU1ldHJpYyB0ZXJtaW5hbE1ldHJpYywKICAgIGJvb2wgaGFzUmVmZXJlbmNlCikgewogICAgaWYgKCFoYXNSZWZlcmVuY2UgfHwgc3RhZ2UgPT0gTWVhc3VyZW1lbnRTdGFnZTo6SW5wdXRzKSB7CiAgICAgICAgcmV0dXJuIHtmYWxzZSwgdGVybWluYWxNZXRyaWN9OwogICAgfQoKICAgIHJldHVybiB7CiAgICAgICAgdHJ1ZSwKICAgICAgICBzdGFnZSA9PSBNZWFzdXJlbWVudFN0YWdlOjpTaWduZWREaWZmZXJlbmNlID8gRU1ldHJpYzo6RXJyb3IgOiB0ZXJtaW5hbE1ldHJpYywKICAgIH07Cn0KCmlubGluZSBzdGQ6Om9wdGlvbmFsPE1lYXN1cmVtZW50U3RhZ2U+IG1lYXN1cmVtZW50VXBzdHJlYW1TdGFnZShNZWFzdXJlbWVudFN0YWdlIHN0YWdlKSB7CiAgICBzd2l0Y2ggKHN0YWdlKSB7CiAgICAgICAgY2FzZSBNZWFzdXJlbWVudFN0YWdlOjpNZXRyaWNPdXRwdXQ6IHJldHVybiBNZWFzdXJlbWVudFN0YWdlOjpTaWduZWREaWZmZXJlbmNlOwogICAgICAgIGNhc2UgTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZTogcmV0dXJuIE1lYXN1cmVtZW50U3RhZ2U6OklucHV0czsKICAgICAgICBjYXNlIE1lYXN1cmVtZW50U3RhZ2U6OklucHV0czogcmV0dXJuIHN0ZDo6bnVsbG9wdDsKICAgICAgICBkZWZhdWx0OiByZXR1cm4gc3RkOjpudWxsb3B0OwogICAgfQp9CgppbmxpbmUgc3RkOjpvcHRpb25hbDxNZWFzdXJlbWVudFN0YWdlPiBtZWFzdXJlbWVudERvd25zdHJlYW1TdGFnZShNZWFzdXJlbWVudFN0YWdlIHN0YWdlKSB7CiAgICBzd2l0Y2ggKHN0YWdlKSB7CiAgICAgICAgY2FzZSBNZWFzdXJlbWVudFN0YWdlOjpJbnB1dHM6IHJldHVybiBNZWFzdXJlbWVudFN0YWdlOjpTaWduZWREaWZmZXJlbmNlOwogICAgICAgIGNhc2UgTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZTogcmV0dXJuIE1lYXN1cmVtZW50U3RhZ2U6Ok1ldHJpY091dHB1dDsKICAgICAgICBjYXNlIE1lYXN1cmVtZW50U3RhZ2U6Ok1ldHJpY091dHB1dDogcmV0dXJuIHN0ZDo6bnVsbG9wdDsKICAgICAgICBkZWZhdWx0OiByZXR1cm4gc3RkOjpudWxsb3B0OwogICAgfQp9Cg==',
+              'show_old': 'ICAgIGJvb2wgc2hvd1Vwc3RyZWFtKCkgewogICAgICAgIGlmICghbU1lYXN1cmVtZW50UmVmZXJlbmNlKSB7CiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICB9CgogICAgICAgIGlmIChtTWVhc3VyZW1lbnRTdGFnZSA9PSBNZWFzdXJlbWVudFN0YWdlOjpNZXRyaWNPdXRwdXQpIHsKICAgICAgICAgICAgc2V0TWVhc3VyZW1lbnRTdGFnZShNZWFzdXJlbWVudFN0YWdlOjpTaWduZWREaWZmZXJlbmNlKTsKICAgICAgICAgICAgcmV0dXJuIHRydWU7CiAgICAgICAgfQoKICAgICAgICBpZiAobU1lYXN1cmVtZW50U3RhZ2UgPT0gTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZSkgewogICAgICAgICAgICBzZXRNZWFzdXJlbWVudFN0YWdlKE1lYXN1cmVtZW50U3RhZ2U6OklucHV0cyk7CiAgICAgICAgICAgIHJldHVybiB0cnVlOwogICAgICAgIH0KCiAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgfQo=',
+              'show_new': 'ICAgIGJvb2wgc2hvd1Vwc3RyZWFtKCkgewogICAgICAgIGlmICghbU1lYXN1cmVtZW50UmVmZXJlbmNlKSB7CiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICB9CgogICAgICAgIGNvbnN0IGF1dG8gdXBzdHJlYW0gPSBtZWFzdXJlbWVudFVwc3RyZWFtU3RhZ2UobU1lYXN1cmVtZW50U3RhZ2UpOwogICAgICAgIGlmICghdXBzdHJlYW0pIHsKICAgICAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICAgIH0KCiAgICAgICAgc2V0TWVhc3VyZW1lbnRTdGFnZSgqdXBzdHJlYW0pOwogICAgICAgIHJldHVybiB0cnVlOwogICAgfQo=',
+              'sampling_canvas_old': 'ICAgICAgICAgICAgaWYgKG1JbWFnZSkgewogICAgICAgICAgICAgICAgbGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZy5pbnRlcmFjdGl2ZVJlZmVyZW5jZU9mZnNldCA9CiAgICAgICAgICAgICAgICAgICAgbUltYWdlLT5kYXRhV2luZG93KCkubWluIC0gbU1lYXN1cmVtZW50UmVmZXJlbmNlLT5kYXRhV2luZG93KCkubWluOwogICAgICAgICAgICAgICAgbGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZy5tYXRlcmlhbGl6ZWRSZWZlcmVuY2VPZmZzZXQgPQogICAgICAgICAgICAgICAgICAgIChtTWVhc3VyZW1lbnRSZWZlcmVuY2UtPnNpemUoKSAtIG1JbWFnZS0+c2l6ZSgpKSAvIDI7CiAgICAgICAgICAgIH0K',
+              'sampling_canvas_new': 'ICAgICAgICAgICAgaWYgKG1JbWFnZSkgewogICAgICAgICAgICAgICAgbGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZyA9IG1lYXN1cmVtZW50U2FtcGxpbmdTcGVjKG1JbWFnZS0+ZGF0YVdpbmRvdygpLCBtTWVhc3VyZW1lbnRSZWZlcmVuY2UtPmRhdGFXaW5kb3coKSk7CiAgICAgICAgICAgIH0K',
+              'sync_old': 'ICAgIHZvaWQgc3luY01lYXN1cmVtZW50U3RhZ2UoKSB7CiAgICAgICAgaWYgKG1NZWFzdXJlbWVudFN0YWdlID09IE1lYXN1cmVtZW50U3RhZ2U6OklucHV0cykgewogICAgICAgICAgICBtUmVmZXJlbmNlID0gbnVsbHB0cjsKICAgICAgICAgICAgbU1ldHJpYyA9IG1NZWFzdXJlbWVudE1ldHJpYzsKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KCiAgICAgICAgbVJlZmVyZW5jZSA9IG1NZWFzdXJlbWVudFJlZmVyZW5jZTsKICAgICAgICBtTWV0cmljID0gbU1lYXN1cmVtZW50U3RhZ2UgPT0gTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZSA/IEVNZXRyaWM6OkVycm9yIDogbU1lYXN1cmVtZW50TWV0cmljOwogICAgfQo=',
+              'sync_new': 'ICAgIHZvaWQgc3luY01lYXN1cmVtZW50U3RhZ2UoKSB7CiAgICAgICAgY29uc3QgYXV0byBwcm9qZWN0aW9uID0gbWVhc3VyZW1lbnRTdGFnZVByb2plY3Rpb24oCiAgICAgICAgICAgIG1NZWFzdXJlbWVudFN0YWdlLAogICAgICAgICAgICBtTWVhc3VyZW1lbnRNZXRyaWMsCiAgICAgICAgICAgIHN0YXRpY19jYXN0PGJvb2w+KG1NZWFzdXJlbWVudFJlZmVyZW5jZSkKICAgICAgICApOwogICAgICAgIG1SZWZlcmVuY2UgPSBwcm9qZWN0aW9uLnVzZXNSZWZlcmVuY2UgPyBtTWVhc3VyZW1lbnRSZWZlcmVuY2UgOiBudWxscHRyOwogICAgICAgIG1NZXRyaWMgPSBwcm9qZWN0aW9uLmVmZmVjdGl2ZU1ldHJpYzsKICAgIH0K',
+              'test_src': 'I2luY2x1ZGUgPHRldi9NZWFzdXJlbWVudC5oPgoKI2luY2x1ZGUgPGNzdGRsaWI+CiNpbmNsdWRlIDxpb3N0cmVhbT4KI2luY2x1ZGUgPHN0cmluZ192aWV3PgoKbmFtZXNwYWNlIHsKCnZvaWQgcmVxdWlyZShib29sIGNvbmRpdGlvbiwgc3RkOjpzdHJpbmdfdmlldyBtZXNzYWdlKSB7CiAgICBpZiAoIWNvbmRpdGlvbikgewogICAgICAgIHN0ZDo6Y2VyciA8PCAibWVhc3VyZW1lbnQgc2VtYW50aWMgYW5jaG9yIGZhaWxlZDogIiA8PCBtZXNzYWdlIDw8ICdcbic7CiAgICAgICAgc3RkOjpleGl0KDEpOwogICAgfQp9Cgpib29sIHNhbWVWZWN0b3IobmFub2d1aTo6VmVjdG9yMmkgYSwgbmFub2d1aTo6VmVjdG9yMmkgYikgewogICAgcmV0dXJuIGEueCgpID09IGIueCgpICYmIGEueSgpID09IGIueSgpOwp9Cgpib29sIHNhbWVCb3goY29uc3QgdGV2OjpCb3gyaSYgYSwgY29uc3QgdGV2OjpCb3gyaSYgYikgewogICAgcmV0dXJuIHNhbWVWZWN0b3IoYS5taW4sIGIubWluKSAmJiBzYW1lVmVjdG9yKGEubWF4LCBiLm1heCk7Cn0KCnZvaWQgcmVxdWlyZU1lYXN1cmVtZW50U3RhYmxlKGNvbnN0IHRldjo6TWVhc3VyZW1lbnRTcGVjJiBhY3R1YWwsIGNvbnN0IHRldjo6TWVhc3VyZW1lbnRTcGVjJiBleHBlY3RlZCkgewogICAgcmVxdWlyZShhY3R1YWwuY2FuZGlkYXRlLmhhc192YWx1ZSgpID09IGV4cGVjdGVkLmNhbmRpZGF0ZS5oYXNfdmFsdWUoKSwgImNhbmRpZGF0ZSBwcmVzZW5jZSBkcmlmdGVkIik7CiAgICByZXF1aXJlKGFjdHVhbC5yZWZlcmVuY2UuaGFzX3ZhbHVlKCkgPT0gZXhwZWN0ZWQucmVmZXJlbmNlLmhhc192YWx1ZSgpLCAicmVmZXJlbmNlIHByZXNlbmNlIGRyaWZ0ZWQiKTsKCiAgICBpZiAoYWN0dWFsLmNhbmRpZGF0ZSAmJiBleHBlY3RlZC5jYW5kaWRhdGUpIHsKICAgICAgICByZXF1aXJlKGFjdHVhbC5jYW5kaWRhdGUtPm5hbWUgPT0gZXhwZWN0ZWQuY2FuZGlkYXRlLT5uYW1lLCAiY2FuZGlkYXRlIGlkZW50aXR5IGRyaWZ0ZWQiKTsKICAgICAgICByZXF1aXJlKGFjdHVhbC5jYW5kaWRhdGUtPnJ1bnRpbWVJZCA9PSBleHBlY3RlZC5jYW5kaWRhdGUtPnJ1bnRpbWVJZCwgImNhbmRpZGF0ZSBydW50aW1lIGlkIGRyaWZ0ZWQiKTsKICAgIH0KICAgIGlmIChhY3R1YWwucmVmZXJlbmNlICYmIGV4cGVjdGVkLnJlZmVyZW5jZSkgewogICAgICAgIHJlcXVpcmUoYWN0dWFsLnJlZmVyZW5jZS0+bmFtZSA9PSBleHBlY3RlZC5yZWZlcmVuY2UtPm5hbWUsICJyZWZlcmVuY2UgaWRlbnRpdHkgZHJpZnRlZCIpOwogICAgICAgIHJlcXVpcmUoYWN0dWFsLnJlZmVyZW5jZS0+cnVudGltZUlkID09IGV4cGVjdGVkLnJlZmVyZW5jZS0+cnVudGltZUlkLCAicmVmZXJlbmNlIHJ1bnRpbWUgaWQgZHJpZnRlZCIpOwogICAgfQoKICAgIHJlcXVpcmUoYWN0dWFsLnNhbXBsaW5nLmludGVyYWN0aXZlUG9saWN5ID09IGV4cGVjdGVkLnNhbXBsaW5nLmludGVyYWN0aXZlUG9saWN5LCAiaW50ZXJhY3RpdmUgY29ycmVzcG9uZGVuY2UgcG9saWN5IGRyaWZ0ZWQiKTsKICAgIHJlcXVpcmUoYWN0dWFsLnNhbXBsaW5nLm1hdGVyaWFsaXplZFBvbGljeSA9PSBleHBlY3RlZC5zYW1wbGluZy5tYXRlcmlhbGl6ZWRQb2xpY3ksICJtYXRlcmlhbGl6ZWQgY29ycmVzcG9uZGVuY2UgcG9saWN5IGRyaWZ0ZWQiKTsKICAgIHJlcXVpcmUoc2FtZVZlY3RvcihhY3R1YWwuc2FtcGxpbmcuaW50ZXJhY3RpdmVSZWZlcmVuY2VPZmZzZXQsIGV4cGVjdGVkLnNhbXBsaW5nLmludGVyYWN0aXZlUmVmZXJlbmNlT2Zmc2V0KSwgImludGVyYWN0aXZlIGNvcnJlc3BvbmRlbmNlIG9mZnNldCBkcmlmdGVkIik7CiAgICByZXF1aXJlKHNhbWVWZWN0b3IoYWN0dWFsLnNhbXBsaW5nLm1hdGVyaWFsaXplZFJlZmVyZW5jZU9mZnNldCwgZXhwZWN0ZWQuc2FtcGxpbmcubWF0ZXJpYWxpemVkUmVmZXJlbmNlT2Zmc2V0KSwgIm1hdGVyaWFsaXplZCBjb3JyZXNwb25kZW5jZSBvZmZzZXQgZHJpZnRlZCIpOwogICAgcmVxdWlyZShhY3R1YWwuYWxwaGFQb2xpY3kgPT0gZXhwZWN0ZWQuYWxwaGFQb2xpY3ksICJhbHBoYSBwb2xpY3kgZHJpZnRlZCIpOwogICAgcmVxdWlyZShhY3R1YWwuY2hhbm5lbEdyb3VwID09IGV4cGVjdGVkLmNoYW5uZWxHcm91cCwgImNoYW5uZWwgZ3JvdXAgZHJpZnRlZCIpOwogICAgcmVxdWlyZShzYW1lQm94KGFjdHVhbC5yZWdpb24sIGV4cGVjdGVkLnJlZ2lvbiksICJyZWdpb24gZHJpZnRlZCIpOwogICAgcmVxdWlyZShhY3R1YWwubWFzayA9PSBleHBlY3RlZC5tYXNrLCAiY2hhbm5lbCBtYXNrIGRyaWZ0ZWQiKTsKICAgIHJlcXVpcmUoYWN0dWFsLm1ldHJpYy5raW5kID09IGV4cGVjdGVkLm1ldHJpYy5raW5kLCAidGVybWluYWwgbWV0cmljIGRyaWZ0ZWQiKTsKICAgIHJlcXVpcmUoYWN0dWFsLm1ldHJpYy5yZWxhdGl2ZUVwc2lsb24gPT0gZXhwZWN0ZWQubWV0cmljLnJlbGF0aXZlRXBzaWxvbiwgIm1ldHJpYyBlcHNpbG9uIGRyaWZ0ZWQiKTsKfQoKdm9pZCByZXF1aXJlUHJvamVjdGlvbihjb25zdCB0ZXY6Ok1lYXN1cmVtZW50TGluZWFnZSYgbGluZWFnZSwgYm9vbCB1c2VzUmVmZXJlbmNlLCB0ZXY6OkVNZXRyaWMgZWZmZWN0aXZlTWV0cmljKSB7CiAgICBjb25zdCBhdXRvIHByb2plY3Rpb24gPSB0ZXY6Om1lYXN1cmVtZW50U3RhZ2VQcm9qZWN0aW9uKAogICAgICAgIGxpbmVhZ2Uuc3RhZ2UsCiAgICAgICAgbGluZWFnZS5tZWFzdXJlbWVudC5tZXRyaWMua2luZCwKICAgICAgICBsaW5lYWdlLm1lYXN1cmVtZW50LnJlZmVyZW5jZS5oYXNfdmFsdWUoKQogICAgKTsKICAgIHJlcXVpcmUocHJvamVjdGlvbi51c2VzUmVmZXJlbmNlID09IHVzZXNSZWZlcmVuY2UsICJyZWZlcmVuY2UgcHJvamVjdGlvbiBpcyB3cm9uZyIpOwogICAgcmVxdWlyZShwcm9qZWN0aW9uLmVmZmVjdGl2ZU1ldHJpYyA9PSBlZmZlY3RpdmVNZXRyaWMsICJtZXRyaWMgcHJvamVjdGlvbiBpcyB3cm9uZyIpOwp9Cgp9IC8vIG5hbWVzcGFjZQoKaW50IG1haW4oKSB7CiAgICB1c2luZyBuYW1lc3BhY2UgdGV2OwoKICAgIE1lYXN1cmVtZW50TGluZWFnZSBsaW5lYWdlOwogICAgbGluZWFnZS5tZWFzdXJlbWVudC5jYW5kaWRhdGUgPSBNZWFzdXJlbWVudElucHV0UmVmeyJjYW5kaWRhdGUuZXhyIiwgMTF9OwogICAgbGluZWFnZS5tZWFzdXJlbWVudC5yZWZlcmVuY2UgPSBNZWFzdXJlbWVudElucHV0UmVmeyJyZWZlcmVuY2UuZXhyIiwgMjJ9OwogICAgbGluZWFnZS5tZWFzdXJlbWVudC5jaGFubmVsR3JvdXAgPSAiUkdCIjsKICAgIGxpbmVhZ2UubWVhc3VyZW1lbnQubWFzayA9IEVDaGFubmVsTWFzazo6UmVkIHwgRUNoYW5uZWxNYXNrOjpHcmVlbiB8IEVDaGFubmVsTWFzazo6Qmx1ZTsKICAgIGxpbmVhZ2UubWVhc3VyZW1lbnQucmVnaW9uID0gQm94Mml7bmFub2d1aTo6VmVjdG9yMml7MTAwLCA0MH0sIG5hbm9ndWk6OlZlY3RvcjJpezEwNCwgNDR9fTsKICAgIGxpbmVhZ2UubWVhc3VyZW1lbnQubWV0cmljLmtpbmQgPSBFTWV0cmljOjpSZWxhdGl2ZVNxdWFyZWRFcnJvcjsKCiAgICBjb25zdCBCb3gyaSBjYW5kaWRhdGVXaW5kb3d7bmFub2d1aTo6VmVjdG9yMml7MTAwLCA0MH0sIG5hbm9ndWk6OlZlY3RvcjJpezEwNCwgNDR9fTsKICAgIGNvbnN0IEJveDJpIHJlZmVyZW5jZVdpbmRvd3tuYW5vZ3VpOjpWZWN0b3IyaXswLCAwfSwgbmFub2d1aTo6VmVjdG9yMml7NCwgNH19OwogICAgbGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZyA9IG1lYXN1cmVtZW50U2FtcGxpbmdTcGVjKGNhbmRpZGF0ZVdpbmRvdywgcmVmZXJlbmNlV2luZG93KTsKCiAgICByZXF1aXJlKHNhbWVWZWN0b3IobGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZy5pbnRlcmFjdGl2ZVJlZmVyZW5jZU9mZnNldCwgbmFub2d1aTo6VmVjdG9yMml7MTAwLCA0MH0pLAogICAgICAgICJpbnRlcmFjdGl2ZSBjb3JyZXNwb25kZW5jZSBkaWQgbm90IHByZXNlcnZlIGRhdGEtd2luZG93IGNvb3JkaW5hdGVzIik7CiAgICByZXF1aXJlKHNhbWVWZWN0b3IobGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZy5tYXRlcmlhbGl6ZWRSZWZlcmVuY2VPZmZzZXQsIG5hbm9ndWk6OlZlY3RvcjJpezAsIDB9KSwKICAgICAgICAibWF0ZXJpYWxpemVkIGNvcnJlc3BvbmRlbmNlIGRpZCBub3QgcHJlc2VydmUgY2VudGVyZWQgaW1hZ2UgZXh0ZW50cyIpOwogICAgcmVxdWlyZSghbWVhc3VyZW1lbnRDb3JyZXNwb25kZW5jZVBhdGhzQWdyZWUobGluZWFnZS5tZWFzdXJlbWVudC5zYW1wbGluZyksCiAgICAgICAgImZpeHR1cmUgbXVzdCBmb3JjZSBUX2ludGVyYWN0aXZlICE9IFRfbWF0ZXJpYWxpemVkIik7CgogICAgbGluZWFnZS5zdGFnZSA9IE1lYXN1cmVtZW50U3RhZ2U6Ok1ldHJpY091dHB1dDsKICAgIGNvbnN0IE1lYXN1cmVtZW50U3BlYyB0ZXJtaW5hbE1lYXN1cmVtZW50ID0gbGluZWFnZS5tZWFzdXJlbWVudDsKCiAgICByZXF1aXJlUHJvamVjdGlvbihsaW5lYWdlLCB0cnVlLCBFTWV0cmljOjpSZWxhdGl2ZVNxdWFyZWRFcnJvcik7CiAgICByZXF1aXJlTWVhc3VyZW1lbnRTdGFibGUobGluZWFnZS5tZWFzdXJlbWVudCwgdGVybWluYWxNZWFzdXJlbWVudCk7CgogICAgbGluZWFnZS5zdGFnZSA9ICptZWFzdXJlbWVudFVwc3RyZWFtU3RhZ2UobGluZWFnZS5zdGFnZSk7CiAgICByZXF1aXJlKGxpbmVhZ2Uuc3RhZ2UgPT0gTWVhc3VyZW1lbnRTdGFnZTo6U2lnbmVkRGlmZmVyZW5jZSwgIm1ldHJpYyAtPiBzaWduZWQgZGlmZmVyZW5jZSByZXR1cm4gZmFpbGVkIik7CiAgICByZXF1aXJlUHJvamVjdGlvbihsaW5lYWdlLCB0cnVlLCBFTWV0cmljOjpFcnJvcik7CiAgICByZXF1aXJlTWVhc3VyZW1lbnRTdGFibGUobGluZWFnZS5tZWFzdXJlbWVudCwgdGVybWluYWxNZWFzdXJlbWVudCk7CgogICAgbGluZWFnZS5zdGFnZSA9ICptZWFzdXJlbWVudFVwc3RyZWFtU3RhZ2UobGluZWFnZS5zdGFnZSk7CiAgICByZXF1aXJlKGxpbmVhZ2Uuc3RhZ2UgPT0gTWVhc3VyZW1lbnRTdGFnZTo6SW5wdXRzLCAic2lnbmVkIGRpZmZlcmVuY2UgLT4gaW5wdXRzIHJldHVybiBmYWlsZWQiKTsKICAgIHJlcXVpcmVQcm9qZWN0aW9uKGxpbmVhZ2UsIGZhbHNlLCBFTWV0cmljOjpSZWxhdGl2ZVNxdWFyZWRFcnJvcik7CiAgICByZXF1aXJlTWVhc3VyZW1lbnRTdGFibGUobGluZWFnZS5tZWFzdXJlbWVudCwgdGVybWluYWxNZWFzdXJlbWVudCk7CgogICAgbGluZWFnZS5zdGFnZSA9ICptZWFzdXJlbWVudERvd25zdHJlYW1TdGFnZShsaW5lYWdlLnN0YWdlKTsKICAgIHJlcXVpcmUobGluZWFnZS5zdGFnZSA9PSBNZWFzdXJlbWVudFN0YWdlOjpTaWduZWREaWZmZXJlbmNlLCAiaW5wdXRzIC0+IHNpZ25lZCBkaWZmZXJlbmNlIHRyYXZlcnNhbCBmYWlsZWQiKTsKICAgIHJlcXVpcmVQcm9qZWN0aW9uKGxpbmVhZ2UsIHRydWUsIEVNZXRyaWM6OkVycm9yKTsKICAgIHJlcXVpcmVNZWFzdXJlbWVudFN0YWJsZShsaW5lYWdlLm1lYXN1cmVtZW50LCB0ZXJtaW5hbE1lYXN1cmVtZW50KTsKCiAgICBsaW5lYWdlLnN0YWdlID0gKm1lYXN1cmVtZW50RG93bnN0cmVhbVN0YWdlKGxpbmVhZ2Uuc3RhZ2UpOwogICAgcmVxdWlyZShsaW5lYWdlLnN0YWdlID09IE1lYXN1cmVtZW50U3RhZ2U6Ok1ldHJpY091dHB1dCwgInNpZ25lZCBkaWZmZXJlbmNlIC0+IG1ldHJpYyB0cmF2ZXJzYWwgZmFpbGVkIik7CiAgICByZXF1aXJlUHJvamVjdGlvbihsaW5lYWdlLCB0cnVlLCBFTWV0cmljOjpSZWxhdGl2ZVNxdWFyZWRFcnJvcik7CiAgICByZXF1aXJlTWVhc3VyZW1lbnRTdGFibGUobGluZWFnZS5tZWFzdXJlbWVudCwgdGVybWluYWxNZWFzdXJlbWVudCk7CgogICAgY29uc3QgYXV0byBzdGFnZUJlZm9yZVZpZXdDaGFuZ2UgPSBsaW5lYWdlLnN0YWdlOwogICAgbGluZWFnZS52aWV3LmV4cG9zdXJlID0gNC4wZjsKICAgIGxpbmVhZ2Uudmlldy5vZmZzZXQgPSAtMC4yNWY7CiAgICBsaW5lYWdlLnZpZXcuZ2FtbWEgPSAxLjhmOwogICAgbGluZWFnZS52aWV3LnRvbmVtYXAgPSBFVG9uZW1hcDo6RmFsc2VDb2xvcjsKICAgIHJlcXVpcmUobGluZWFnZS5zdGFnZSA9PSBzdGFnZUJlZm9yZVZpZXdDaGFuZ2UsICJ2aWV3IG11dGF0aW9uIGNoYW5nZWQgc3RhZ2UiKTsKICAgIHJlcXVpcmVNZWFzdXJlbWVudFN0YWJsZShsaW5lYWdlLm1lYXN1cmVtZW50LCB0ZXJtaW5hbE1lYXN1cmVtZW50KTsKCiAgICBzdGQ6OmNvdXQgPDwgIm1lYXN1cmVtZW50IHNlbWFudGljIGFuY2hvcjogY29ycmVzcG9uZGVuY2UgZGl2ZXJnZW5jZSArIHJvdW5kIHRyaXAgKyB2aWV3IGlzb2xhdGlvbiBPS1xuIjsKICAgIHJldHVybiAwOwp9Cg==',
+              'cmake_anchor': 'dGFyZ2V0X2xpbmtfbGlicmFyaWVzKHRldiBQUklWQVRFICR7VEVWX0xJQlN9KQo=',
+              'cmake_add': 'dGFyZ2V0X2xpbmtfbGlicmFyaWVzKHRldiBQUklWQVRFICR7VEVWX0xJQlN9KQoKIyB0ZXYrKyB2MC4xIHNlbWFudGljIGFuY2hvcjogb25lIGRlbGliZXJhdGVseSBzbWFsbCBleGVjdXRhYmxlIHRlc3QuIEl0IGlzIGFsc28KIyBwYXJ0IG9mIHRoZSBkZWZhdWx0IGJ1aWxkIHNvIHRoZSBpbmhlcml0ZWQgcGxhdGZvcm0gbWF0cml4IGdhdGVzIHJldHVybmFiaWxpdHkgc2VtYW50aWNzLgplbmFibGVfdGVzdGluZygpCmFkZF9leGVjdXRhYmxlKHRldl9tZWFzdXJlbWVudF9zZW1hbnRpY3NfdGVzdCB0ZXN0cy9NZWFzdXJlbWVudFNlbWFudGljc1Rlc3QuY3BwKQp0YXJnZXRfaW5jbHVkZV9kaXJlY3Rvcmllcyh0ZXZfbWVhc3VyZW1lbnRfc2VtYW50aWNzX3Rlc3QgUFJJVkFURQogICAgJHtDTUFLRV9DVVJSRU5UX1NPVVJDRV9ESVJ9L2luY2x1ZGUKICAgICR7Q01BS0VfQ1VSUkVOVF9TT1VSQ0VfRElSfS9kZXBlbmRlbmNpZXMKICAgICR7Q01BS0VfQ1VSUkVOVF9TT1VSQ0VfRElSfS9kZXBlbmRlbmNpZXMvdGlueWxvZ2dlcgopCnRhcmdldF9saW5rX2xpYnJhcmllcyh0ZXZfbWVhc3VyZW1lbnRfc2VtYW50aWNzX3Rlc3QgUFJJVkFURSBuYW5vZ3VpKQphZGRfdGVzdChOQU1FIHRldl9tZWFzdXJlbWVudF9zZW1hbnRpY3MgQ09NTUFORCB0ZXZfbWVhc3VyZW1lbnRfc2VtYW50aWNzX3Rlc3QpCmFkZF9jdXN0b21fdGFyZ2V0KHRldl9tZWFzdXJlbWVudF9hY2NlcHRhbmNlIEFMTAogICAgQ09NTUFORCAkPFRBUkdFVF9GSUxFOnRldl9tZWFzdXJlbWVudF9zZW1hbnRpY3NfdGVzdD4KICAgIERFUEVORFMgdGV2X21lYXN1cmVtZW50X3NlbWFudGljc190ZXN0CiAgICBDT01NRU5UICJSdW5uaW5nIHRldisrIHYwLjEgbWVhc3VyZW1lbnQgc2VtYW50aWMgYW5jaG9yIgogICAgVkVSQkFUSU0KKQo='
+          }
           p = Path('include/tev/Measurement.h')
           s = p.read_text()
-
-          old = '''struct MeasurementSamplingSpec {
-              EMeasurementCorrespondencePolicy interactivePolicy = EMeasurementCorrespondencePolicy::DataWindowCoordinates;
-              nanogui::Vector2i interactiveReferenceOffset = {0, 0};
-
-              EMeasurementCorrespondencePolicy materializedPolicy = EMeasurementCorrespondencePolicy::CenteredImageExtents;
-              nanogui::Vector2i materializedReferenceOffset = {0, 0};
-          };
-'''
-          new = old + '''
-          inline MeasurementSamplingSpec measurementSamplingSpec(Box2i candidateDataWindow, Box2i referenceDataWindow) {
-              MeasurementSamplingSpec result;
-              result.interactiveReferenceOffset = candidateDataWindow.min - referenceDataWindow.min;
-              result.materializedReferenceOffset = (referenceDataWindow.size() - candidateDataWindow.size()) / 2;
-              return result;
-          }
-'''
-          if old not in s:
-              raise SystemExit('MeasurementSamplingSpec anchor not found')
-          s = s.replace(old, new, 1)
-
-          old = '''struct MeasurementLineage {
-              MeasurementSpec measurement;
-              MeasurementStage stage = MeasurementStage::Inputs;
-              ViewSpec view;
-          };
-'''
-          new = old + '''
-          struct MeasurementStageProjection {
-              bool usesReference = false;
-              EMetric effectiveMetric = EMetric::Error;
-          };
-
-          inline MeasurementStageProjection measurementStageProjection(
-              MeasurementStage stage,
-              EMetric terminalMetric,
-              bool hasReference
-          ) {
-              if (!hasReference || stage == MeasurementStage::Inputs) {
-                  return {false, terminalMetric};
-              }
-
-              return {
-                  true,
-                  stage == MeasurementStage::SignedDifference ? EMetric::Error : terminalMetric,
-              };
-          }
-
-          inline std::optional<MeasurementStage> measurementUpstreamStage(MeasurementStage stage) {
-              switch (stage) {
-                  case MeasurementStage::MetricOutput: return MeasurementStage::SignedDifference;
-                  case MeasurementStage::SignedDifference: return MeasurementStage::Inputs;
-                  case MeasurementStage::Inputs: return std::nullopt;
-                  default: return std::nullopt;
-              }
-          }
-
-          inline std::optional<MeasurementStage> measurementDownstreamStage(MeasurementStage stage) {
-              switch (stage) {
-                  case MeasurementStage::Inputs: return MeasurementStage::SignedDifference;
-                  case MeasurementStage::SignedDifference: return MeasurementStage::MetricOutput;
-                  case MeasurementStage::MetricOutput: return std::nullopt;
-                  default: return std::nullopt;
-              }
-          }
-'''
-          if old not in s:
-              raise SystemExit('MeasurementLineage anchor not found')
-          s = s.replace(old, new, 1)
+          for old_key, new_key in [('sampling_old','sampling_new'), ('lineage_old','lineage_new')]:
+              old, new = d(replacements[old_key]), d(replacements[new_key])
+              if old not in s:
+                  raise SystemExit(f'{old_key} anchor not found')
+              s = s.replace(old, new, 1)
           p.write_text(s)
-
           p = Path('include/tev/ImageCanvas.h')
           s = p.read_text()
-          old = '''    bool showUpstream() {
-              if (!mMeasurementReference) {
-                  return false;
-              }
-
-              if (mMeasurementStage == MeasurementStage::MetricOutput) {
-                  setMeasurementStage(MeasurementStage::SignedDifference);
-                  return true;
-              }
-
-              if (mMeasurementStage == MeasurementStage::SignedDifference) {
-                  setMeasurementStage(MeasurementStage::Inputs);
-                  return true;
-              }
-
-              return false;
-          }
-'''
-          new = '''    bool showUpstream() {
-              if (!mMeasurementReference) {
-                  return false;
-              }
-
-              const auto upstream = measurementUpstreamStage(mMeasurementStage);
-              if (!upstream) {
-                  return false;
-              }
-
-              setMeasurementStage(*upstream);
-              return true;
-          }
-'''
-          if old not in s:
-              raise SystemExit('showUpstream anchor not found')
-          s = s.replace(old, new, 1)
-
-          old = '''            if (mImage) {
-                  lineage.measurement.sampling.interactiveReferenceOffset =
-                      mImage->dataWindow().min - mMeasurementReference->dataWindow().min;
-                  lineage.measurement.sampling.materializedReferenceOffset =
-                      (mMeasurementReference->size() - mImage->size()) / 2;
-              }
-'''
-          new = '''            if (mImage) {
-                  lineage.measurement.sampling = measurementSamplingSpec(mImage->dataWindow(), mMeasurementReference->dataWindow());
-              }
-'''
-          if old not in s:
-              raise SystemExit('sampling anchor not found')
-          s = s.replace(old, new, 1)
-
-          old = '''    void syncMeasurementStage() {
-              if (mMeasurementStage == MeasurementStage::Inputs) {
-                  mReference = nullptr;
-                  mMetric = mMeasurementMetric;
-                  return;
-              }
-
-              mReference = mMeasurementReference;
-              mMetric = mMeasurementStage == MeasurementStage::SignedDifference ? EMetric::Error : mMeasurementMetric;
-          }
-'''
-          new = '''    void syncMeasurementStage() {
-              const auto projection = measurementStageProjection(
-                  mMeasurementStage,
-                  mMeasurementMetric,
-                  static_cast<bool>(mMeasurementReference)
-              );
-              mReference = projection.usesReference ? mMeasurementReference : nullptr;
-              mMetric = projection.effectiveMetric;
-          }
-'''
-          if old not in s:
-              raise SystemExit('syncMeasurementStage anchor not found')
-          s = s.replace(old, new, 1)
+          for old_key, new_key in [('show_old','show_new'), ('sampling_canvas_old','sampling_canvas_new'), ('sync_old','sync_new')]:
+              old, new = d(replacements[old_key]), d(replacements[new_key])
+              if old not in s:
+                  raise SystemExit(f'{old_key} anchor not found')
+              s = s.replace(old, new, 1)
           p.write_text(s)
-
           Path('tests').mkdir(exist_ok=True)
-          Path('tests/MeasurementSemanticsTest.cpp').write_text(r'''#include <tev/Measurement.h>
-
-#include <cstdlib>
-#include <iostream>
-#include <string_view>
-
-namespace {
-
-void require(bool condition, std::string_view message) {
-    if (!condition) {
-        std::cerr << "measurement semantic anchor failed: " << message << '\n';
-        std::exit(1);
-    }
-}
-
-bool sameVector(nanogui::Vector2i a, nanogui::Vector2i b) {
-    return a.x() == b.x() && a.y() == b.y();
-}
-
-bool sameBox(const tev::Box2i& a, const tev::Box2i& b) {
-    return sameVector(a.min, b.min) && sameVector(a.max, b.max);
-}
-
-void requireMeasurementStable(const tev::MeasurementSpec& actual, const tev::MeasurementSpec& expected) {
-    require(actual.candidate.has_value() == expected.candidate.has_value(), "candidate presence drifted");
-    require(actual.reference.has_value() == expected.reference.has_value(), "reference presence drifted");
-
-    if (actual.candidate && expected.candidate) {
-        require(actual.candidate->name == expected.candidate->name, "candidate identity drifted");
-        require(actual.candidate->runtimeId == expected.candidate->runtimeId, "candidate runtime id drifted");
-    }
-    if (actual.reference && expected.reference) {
-        require(actual.reference->name == expected.reference->name, "reference identity drifted");
-        require(actual.reference->runtimeId == expected.reference->runtimeId, "reference runtime id drifted");
-    }
-
-    require(
-        actual.sampling.interactivePolicy == expected.sampling.interactivePolicy,
-        "interactive correspondence policy drifted"
-    );
-    require(
-        actual.sampling.materializedPolicy == expected.sampling.materializedPolicy,
-        "materialized correspondence policy drifted"
-    );
-    require(
-        sameVector(actual.sampling.interactiveReferenceOffset, expected.sampling.interactiveReferenceOffset),
-        "interactive correspondence offset drifted"
-    );
-    require(
-        sameVector(actual.sampling.materializedReferenceOffset, expected.sampling.materializedReferenceOffset),
-        "materialized correspondence offset drifted"
-    );
-    require(actual.alphaPolicy == expected.alphaPolicy, "alpha policy drifted");
-    require(actual.channelGroup == expected.channelGroup, "channel group drifted");
-    require(sameBox(actual.region, expected.region), "region drifted");
-    require(actual.mask == expected.mask, "channel mask drifted");
-    require(actual.metric.kind == expected.metric.kind, "terminal metric drifted");
-    require(actual.metric.relativeEpsilon == expected.metric.relativeEpsilon, "metric epsilon drifted");
-}
-
-void requireProjection(
-    const tev::MeasurementLineage& lineage,
-    bool usesReference,
-    tev::EMetric effectiveMetric
-) {
-    const auto projection = tev::measurementStageProjection(
-        lineage.stage,
-        lineage.measurement.metric.kind,
-        lineage.measurement.reference.has_value()
-    );
-    require(projection.usesReference == usesReference, "reference projection is wrong");
-    require(projection.effectiveMetric == effectiveMetric, "metric projection is wrong");
-}
-
-} // namespace
-
-int main() {
-    using namespace tev;
-
-    MeasurementLineage lineage;
-    lineage.measurement.candidate = MeasurementInputRef{"candidate.exr", 11};
-    lineage.measurement.reference = MeasurementInputRef{"reference.exr", 22};
-    lineage.measurement.channelGroup = "RGB";
-    lineage.measurement.mask = EChannelMask::Red | EChannelMask::Green | EChannelMask::Blue;
-    lineage.measurement.region = Box2i{nanogui::Vector2i{100, 40}, nanogui::Vector2i{104, 44}};
-    lineage.measurement.metric.kind = EMetric::RelativeSquaredError;
-
-    const Box2i candidateWindow{nanogui::Vector2i{100, 40}, nanogui::Vector2i{104, 44}};
-    const Box2i referenceWindow{nanogui::Vector2i{0, 0}, nanogui::Vector2i{4, 4}};
-    lineage.measurement.sampling = measurementSamplingSpec(candidateWindow, referenceWindow);
-
-    require(
-        sameVector(lineage.measurement.sampling.interactiveReferenceOffset, nanogui::Vector2i{100, 40}),
-        "interactive correspondence did not preserve data-window coordinates"
-    );
-    require(
-        sameVector(lineage.measurement.sampling.materializedReferenceOffset, nanogui::Vector2i{0, 0}),
-        "materialized correspondence did not preserve centered image extents"
-    );
-    require(
-        !measurementCorrespondencePathsAgree(lineage.measurement.sampling),
-        "fixture must force T_interactive != T_materialized"
-    );
-
-    lineage.stage = MeasurementStage::MetricOutput;
-    const MeasurementSpec terminalMeasurement = lineage.measurement;
-
-    requireProjection(lineage, true, EMetric::RelativeSquaredError);
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    lineage.stage = *measurementUpstreamStage(lineage.stage);
-    require(lineage.stage == MeasurementStage::SignedDifference, "metric -> signed difference return failed");
-    requireProjection(lineage, true, EMetric::Error);
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    lineage.stage = *measurementUpstreamStage(lineage.stage);
-    require(lineage.stage == MeasurementStage::Inputs, "signed difference -> inputs return failed");
-    requireProjection(lineage, false, EMetric::RelativeSquaredError);
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    lineage.stage = *measurementDownstreamStage(lineage.stage);
-    require(lineage.stage == MeasurementStage::SignedDifference, "inputs -> signed difference traversal failed");
-    requireProjection(lineage, true, EMetric::Error);
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    lineage.stage = *measurementDownstreamStage(lineage.stage);
-    require(lineage.stage == MeasurementStage::MetricOutput, "signed difference -> metric traversal failed");
-    requireProjection(lineage, true, EMetric::RelativeSquaredError);
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    const auto stageBeforeViewChange = lineage.stage;
-    lineage.view.exposure = 4.0f;
-    lineage.view.offset = -0.25f;
-    lineage.view.gamma = 1.8f;
-    lineage.view.tonemap = ETonemap::FalseColor;
-    require(lineage.stage == stageBeforeViewChange, "view mutation changed stage");
-    requireMeasurementStable(lineage.measurement, terminalMeasurement);
-
-    std::cout << "measurement semantic anchor: correspondence divergence + round trip + view isolation OK\n";
-    return 0;
-}
-''')
-
+          Path('tests/MeasurementSemanticsTest.cpp').write_text(d(replacements['test_src']))
           p = Path('CMakeLists.txt')
           s = p.read_text()
-          anchor = 'target_link_libraries(tev PRIVATE ${TEV_LIBS})\n'
-          addition = anchor + r'''
-
-# tev++ v0.1 semantic anchor: one deliberately small executable test. It is also
-# part of the default build so the inherited platform matrix gates returnability semantics.
-enable_testing()
-add_executable(tev_measurement_semantics_test tests/MeasurementSemanticsTest.cpp)
-target_include_directories(tev_measurement_semantics_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
-    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tinylogger
-)
-target_link_libraries(tev_measurement_semantics_test PRIVATE nanogui)
-add_test(NAME tev_measurement_semantics COMMAND tev_measurement_semantics_test)
-add_custom_target(tev_measurement_acceptance ALL
-    COMMAND $<TARGET_FILE:tev_measurement_semantics_test>
-    DEPENDS tev_measurement_semantics_test
-    COMMENT "Running tev++ v0.1 measurement semantic anchor"
-    VERBATIM
-)
-'''
-          if anchor not in s:
-              raise SystemExit('CMake link anchor not found')
-          s = s.replace(anchor, addition, 1)
-          p.write_text(s)
+          old, new = d(replacements['cmake_anchor']), d(replacements['cmake_add'])
+          if old not in s:
+              raise SystemExit('CMake anchor not found')
+          p.write_text(s.replace(old, new, 1))
           PY
-
           git rm .github/workflows/apply-v01-semantic-anchor.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
